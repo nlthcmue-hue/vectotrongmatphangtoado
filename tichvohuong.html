@@ -1,0 +1,3094 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toán 10 – Bài 11: Tích vô hướng của hai vectơ (Học qua Trải nghiệm)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* =====================================================
+       KÝ HIỆU TOÁN HỌC CHUẨN (VECTƠ, PHÂN SỐ, BIẾN SỐ)
+       Hiển thị sắc nét, không phụ thuộc CDN công thức
+       ===================================================== */
+    .math-var {
+      font-style: italic;
+      font-weight: 600;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 1.08em;
+    }
+
+    .vec {
+      position: relative;
+      display: inline-block;
+      font-style: italic;
+      font-weight: 700;
+      font-family: 'Times New Roman', Georgia, serif;
+      padding-top: 0.24em;
+      line-height: 1.02;
+      margin: 0 0.08em;
+      font-size: 1.06em;
+    }
+
+    .vec.vec-zero {
+      font-style: normal;
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+    }
+
+    .vec::before {
+      content: "";
+      position: absolute;
+      top: 0.11em;
+      left: 0.04em;
+      right: 0.22em;
+      height: 0.085em;
+      background-color: currentColor;
+      border-radius: 1px;
+    }
+
+    .vec::after {
+      content: "";
+      position: absolute;
+      top: 0.025em;
+      right: -0.02em;
+      width: 0;
+      height: 0;
+      border-top: 0.13em solid transparent;
+      border-bottom: 0.13em solid transparent;
+      border-left: 0.28em solid currentColor;
+    }
+
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      margin: 0 0.16em;
+      font-size: 0.9em;
+      line-height: 1.1;
+    }
+
+    .frac .num {
+      border-bottom: 1.8px solid currentColor;
+      padding: 0 0.22em 0.08em;
+      text-align: center;
+    }
+
+    .frac .den {
+      padding: 0.08em 0.22em 0;
+      text-align: center;
+    }
+
+    /* Thanh trượt lớn dễ thao tác trên màn hình chiếu & cảm ứng */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #2563eb;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #2563eb;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+      cursor: pointer;
+    }
+
+    /* Hiệu ứng chớp sáng khi góc vuông 90 độ */
+    @keyframes glowAmber {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45);
+      }
+      50% {
+        box-shadow: 0 0 0 12px rgba(245, 158, 11, 0);
+      }
+    }
+
+    .perp-glow {
+      animation: glowAmber 1.4s infinite;
+    }
+
+    /* Canvas responsive container */
+    .canvas-box {
+      position: relative;
+      width: 100%;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .canvas-box canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Pháo hoa Confetti lớp phủ */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Canvas hiệu ứng pháo hoa toàn màn hình -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- =====================================================
+       HEADER & THANH ĐIỀU HƯỚNG 4 TRẠM
+       ===================================================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <!-- Tiêu đề bài học -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-extrabold text-xl shadow-md shrink-0">
+              <span class="vec text-white" style="font-size: 1.05rem;">u</span>·<span class="vec text-white" style="font-size: 1.05rem;">v</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">Toán 10 – Kết nối tri thức</span>
+                <span class="text-xs font-semibold text-slate-500 hidden sm:inline">Học tập qua Trải nghiệm (Kolb)</span>
+              </div>
+              <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight mt-0.5">
+                Bài 11. Tích vô hướng của hai vectơ
+              </h1>
+            </div>
+          </div>
+
+          <!-- Nút bật/tắt âm thanh toàn cục -->
+          <button id="global-sound-btn" onclick="toggleSound()" class="lg:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-sm transition" title="Bật/tắt âm thanh">
+            <span id="sound-icon-mobile">🔊</span>
+          </button>
+        </div>
+
+        <!-- 4 Trạm điều hướng -->
+        <nav class="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:flex lg:items-center" aria-label="Điều hướng 4 trạm">
+          <button onclick="switchStation(1)" id="nav-station-1" class="station-nav-btn px-3 sm:px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border-2">
+            <span class="w-6 h-6 rounded-full text-xs flex items-center justify-center font-extrabold bg-white/20">1</span>
+            <span>Khởi động</span>
+          </button>
+          <button onclick="switchStation(2)" id="nav-station-2" class="station-nav-btn px-3 sm:px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border-2">
+            <span class="w-6 h-6 rounded-full text-xs flex items-center justify-center font-extrabold bg-slate-200 text-slate-700">2</span>
+            <span>Khám phá</span>
+          </button>
+          <button onclick="switchStation(3)" id="nav-station-3" class="station-nav-btn px-3 sm:px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border-2">
+            <span class="w-6 h-6 rounded-full text-xs flex items-center justify-center font-extrabold bg-slate-200 text-slate-700">3</span>
+            <span>Đúc kết</span>
+          </button>
+          <button onclick="switchStation(4)" id="nav-station-4" class="station-nav-btn px-3 sm:px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border-2">
+            <span class="w-6 h-6 rounded-full text-xs flex items-center justify-center font-extrabold bg-slate-200 text-slate-700">4</span>
+            <span>Đấu trường</span>
+          </button>
+          <button onclick="toggleSound()" id="sound-btn-desktop" class="hidden lg:inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-sm transition ml-1" title="Bật/tắt âm thanh">
+            <span id="sound-icon-desktop">🔊</span>
+            <span id="sound-text-desktop" class="text-xs">Âm thanh</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================
+       NỘI DUNG CHÍNH
+       ===================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 sm:py-6">
+
+    <!-- ===================================================
+         TRẠM 1: KHỞI ĐỘNG – MÔ PHỎNG VẬT LÝ "XE GOÒNG TRÊN ĐƯỜNG RAY"
+         =================================================== -->
+    <section id="station-1" class="station-section space-y-5">
+      <!-- Tiêu đề trạm -->
+      <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 text-white rounded-3xl p-5 sm:p-6 shadow-md">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="inline-block text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-2">
+              Trạm 1 • Pha Trải nghiệm cụ thể (Concrete Experience)
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold">Mô phỏng Vật lý: "Xe goòng trên đường ray"</h2>
+            <p class="text-blue-100 text-sm sm:text-base mt-1.5 max-w-3xl">
+              Một chiếc xe goòng <strong>đang chuyển động sẵn</strong> từ điểm <span class="math-var text-white">M</span> đến điểm <span class="math-var text-white">N</span> trên đường ray thẳng nằm ngang (vận tốc ban đầu <span class="math-var text-white">v</span><sub>0</sub> = 12 m/s, khối lượng <span class="math-var text-white">m</span> = 16 kg). Hãy thay đổi góc kéo <span class="math-var text-white">α</span> và quan sát chuyển động của xe cùng công cơ học sinh ra!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Cột trái: Khung Canvas mô phỏng + Đồng hồ vận tốc + Trạng thái -->
+        <div class="lg:col-span-8 space-y-4">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Thanh ghi chú Vật lý bắt buộc ngay trên khung mô phỏng -->
+            <div class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30">
+                  ✓ Bỏ qua ma sát
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-500/20 text-violet-200 font-semibold border border-violet-400/30">
+                  ℹ Thành phần lực vuông góc với đường ray bị phản lực của ray triệt tiêu
+                </span>
+              </div>
+              <span class="font-mono text-slate-300 font-semibold">v₀ = 12,0 m/s</span>
+            </div>
+
+            <!-- Canvas hoạt ảnh -->
+            <div class="canvas-box h-[310px] sm:h-[360px] bg-gradient-to-b from-sky-50 via-white to-slate-100">
+              <canvas id="canvas-s1"></canvas>
+            </div>
+
+            <!-- Thanh đồng hồ đo vận tốc thời gian thực -->
+            <div class="p-4 sm:p-5 bg-slate-50 border-t border-slate-200">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-sm font-bold text-slate-700">Đồng hồ đo vận tốc tức thời (<span class="math-var">v</span>)</span>
+                    <span id="s1-vel-text" class="font-mono text-xl font-extrabold text-blue-700">12,00 m/s</span>
+                  </div>
+                  <div class="w-full h-4 bg-slate-200 rounded-full overflow-hidden relative">
+                    <!-- Vạch mốc v0 = 12 m/s (trên thang 0..20 m/s -> 60%) -->
+                    <div class="absolute top-0 bottom-0 left-[60%] w-0.5 bg-slate-700 z-10" title="Vận tốc ban đầu v₀ = 12 m/s"></div>
+                    <div id="s1-vel-bar" class="h-full bg-blue-600 rounded-full transition-all duration-75" style="width: 60%;"></div>
+                  </div>
+                  <div class="flex justify-between text-xs text-slate-500 font-mono mt-1">
+                    <span>0 m/s</span>
+                    <span class="font-bold text-slate-700">v₀ = 12 m/s</span>
+                    <span>20 m/s</span>
+                  </div>
+                </div>
+
+                <!-- Kết quả Công cơ học A (đơn vị J) -->
+                <div id="s1-work-card" class="rounded-2xl p-3.5 border-2 bg-emerald-50 border-emerald-400 transition-colors">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs sm:text-sm font-bold uppercase tracking-wide text-slate-600">Công cơ học <span class="math-var">A</span></span>
+                    <span id="s1-work-sign-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white">A &gt; 0 (Dương)</span>
+                  </div>
+                  <div class="mt-1 flex items-baseline justify-between gap-2 flex-wrap">
+                    <span id="s1-work-value" class="font-mono text-2xl sm:text-3xl font-extrabold text-emerald-700">+415,7 J</span>
+                    <span id="s1-work-formula" class="text-xs sm:text-sm font-mono text-slate-600">60 · 8 · cos(30°)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bảng trạng thái chuyển động đổi màu theo 3 trường hợp -->
+          <div id="s1-status-banner" class="rounded-2xl p-4 sm:p-5 border-2 bg-emerald-50 border-emerald-400 text-emerald-950 transition-all shadow-sm">
+            <div class="flex items-start gap-3">
+              <div id="s1-status-icon" class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-2xl shrink-0 font-bold">🚀</div>
+              <div>
+                <h3 id="s1-status-title" class="text-lg sm:text-xl font-extrabold">Góc nhọn (α &lt; 90°): Công phát động (A &gt; 0)</h3>
+                <p id="s1-status-desc" class="text-sm sm:text-base mt-0.5 font-medium">
+                  Thành phần lực song song cùng hướng với chuyển động <span class="vec">MN</span> → Xe chuyển động <strong>NHANH DẦN</strong> (vận tốc tăng dần từ 12,0 m/s lên <span id="s1-vn-preview" class="font-mono font-bold">13,98</span> m/s).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: Bảng điều khiển tương tác -->
+        <div class="lg:col-span-4 space-y-4">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-5">
+            <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+              <span class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">🎛️</span>
+              Thiết lập thử nghiệm
+            </h3>
+
+            <!-- Thanh trượt Góc α -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="s1-angle-slider" class="font-bold text-slate-800 text-sm sm:text-base">
+                  Góc <span class="math-var">α</span> = (<span class="vec">F</span>, <span class="vec">MN</span>)
+                </label>
+                <span id="s1-angle-val" class="font-mono text-xl font-extrabold text-blue-700 bg-blue-50 px-3 py-0.5 rounded-lg border border-blue-200">30°</span>
+              </div>
+              <input id="s1-angle-slider" type="range" min="0" max="180" step="1" value="30" class="w-full" />
+              <p class="text-xs text-slate-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 leading-relaxed">
+                <strong>Lưu ý:</strong> <span class="math-var">α</span> = (<span class="vec">F</span>, <span class="vec">MN</span>) là góc giữa <strong>vectơ lực <span class="vec">F</span></strong> và <strong>vectơ dịch chuyển <span class="vec">MN</span></strong> (không phải góc với mặt đất).
+              </p>
+
+              <!-- Các nút chọn nhanh góc -->
+              <div class="grid grid-cols-4 sm:grid-cols-7 lg:grid-cols-4 gap-1.5 pt-1">
+                <button onclick="setS1Angle(0)" class="s1-preset px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 transition">0°</button>
+                <button onclick="setS1Angle(30)" class="s1-preset px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 transition">30°</button>
+                <button onclick="setS1Angle(60)" class="s1-preset px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 transition">60°</button>
+                <button onclick="setS1Angle(90)" class="s1-preset px-2 py-1.5 rounded-lg text-xs font-bold border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition">90°</button>
+                <button onclick="setS1Angle(120)" class="s1-preset px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-400 transition">120°</button>
+                <button onclick="setS1Angle(150)" class="s1-preset px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-400 transition">150°</button>
+                <button onclick="setS1Angle(180)" class="s1-preset px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-400 transition">180°</button>
+              </div>
+            </div>
+
+            <!-- Thanh trượt Độ lớn lực F -->
+            <div class="space-y-1.5 pt-1 border-t border-slate-100">
+              <div class="flex items-center justify-between">
+                <label for="s1-force-slider" class="font-bold text-slate-800 text-sm sm:text-base">
+                  Độ lớn lực |<span class="vec">F</span>|
+                </label>
+                <span id="s1-force-val" class="font-mono text-lg font-extrabold text-slate-900">60 N</span>
+              </div>
+              <input id="s1-force-slider" type="range" min="10" max="100" step="5" value="60" class="w-full" />
+              <div class="flex justify-between text-xs text-slate-400 font-mono">
+                <span>10 N</span><span>50 N</span><span>100 N</span>
+              </div>
+            </div>
+
+            <!-- Thanh trượt Quãng đường d = |MN| -->
+            <div class="space-y-1.5 pt-1 border-t border-slate-100">
+              <div class="flex items-center justify-between">
+                <label for="s1-dist-slider" class="font-bold text-slate-800 text-sm sm:text-base">
+                  Quãng đường <span class="math-var">d</span> = |<span class="vec">MN</span>|
+                </label>
+                <span id="s1-dist-val" class="font-mono text-lg font-extrabold text-slate-900">8 m</span>
+              </div>
+              <input id="s1-dist-slider" type="range" min="2" max="10" step="1" value="8" class="w-full" />
+              <div class="flex justify-between text-xs text-slate-400 font-mono">
+                <span>2 m</span><span>6 m</span><span>10 m</span>
+              </div>
+            </div>
+
+            <!-- Nút Chạy & Đặt lại -->
+            <div class="grid grid-cols-5 gap-2.5 pt-2">
+              <button id="s1-run-btn" onclick="runS1Simulation()" class="col-span-3 py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-extrabold text-base shadow-md shadow-blue-600/25 transition flex items-center justify-center gap-2">
+                <span>▶</span> Chạy thử nghiệm
+              </button>
+              <button onclick="resetS1Simulation()" class="col-span-2 py-3.5 px-3 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-base border border-slate-300 transition flex items-center justify-center gap-1.5">
+                <span>↺</span> Đặt lại
+              </button>
+            </div>
+          </div>
+
+          <!-- Nút chuyển sang Trạm 2 -->
+          <button onclick="switchStation(2)" class="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-sm transition flex items-center justify-center gap-2">
+            Tiếp tục sang Trạm 2: Khám phá Toán học <span>→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Khung câu hỏi gợi mở mâu thuẫn nhận thức -->
+      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-3xl p-5 sm:p-6 shadow-sm">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl shrink-0 shadow">💡</div>
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-800">Câu hỏi gợi mở – Tạo mâu thuẫn nhận thức</span>
+            <p class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 leading-snug">
+              "Tại sao cùng tác dụng một lực có độ lớn như nhau lên xe đi từ <span class="math-var">M</span> đến <span class="math-var">N</span>, nhưng công sinh ra có lúc dương, lúc bằng 0, lúc lại âm?"
+            </p>
+            <p class="text-sm sm:text-base text-slate-700 mt-1.5">
+              Trong Toán học, giá trị của biểu thức <span class="math-var">A</span> (không kể đơn vị đo) dẫn tới một phép toán mới giữa hai vectơ: <strong>Tích vô hướng của hai vectơ</strong>. Hãy khám phá ở Trạm 2!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================
+         TRẠM 2: KHÁM PHÁ TOÁN HỌC (TAB 2A & TAB 2B)
+         =================================================== -->
+    <section id="station-2" class="station-section hidden space-y-5">
+      <div class="bg-gradient-to-r from-indigo-700 via-indigo-600 to-violet-600 text-white rounded-3xl p-5 sm:p-6 shadow-md">
+        <span class="inline-block text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-2">
+          Trạm 2 • Pha Quan sát, Phản ánh &amp; Khái quát hóa
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Khám phá Toán học: Góc &amp; Tích vô hướng của hai vectơ</h2>
+        <p class="text-indigo-100 text-sm sm:text-base mt-1">
+          Thực hiện lần lượt <strong>Tab 2A</strong> (luyện ghép gốc xác định góc) rồi chuyển sang <strong>Tab 2B</strong> (khám phá công thức và quy luật dấu của tích vô hướng).
+        </p>
+      </div>
+
+      <!-- Thanh chọn Tab 2A / Tab 2B -->
+      <div class="flex flex-wrap gap-3">
+        <button id="tab2a-btn" onclick="switchTab2('2a')" class="flex-1 min-w-[240px] py-3.5 px-5 rounded-2xl font-extrabold text-base sm:text-lg border-2 transition flex items-center justify-center gap-2.5 shadow-sm">
+          <span class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-indigo-100 text-indigo-800">Tab 2A</span>
+          <span>Ghép gốc xác định góc giữa hai vectơ</span>
+        </button>
+        <button id="tab2b-btn" onclick="switchTab2('2b')" class="flex-1 min-w-[240px] py-3.5 px-5 rounded-2xl font-extrabold text-base sm:text-lg border-2 transition flex items-center justify-center gap-2.5 shadow-sm">
+          <span class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-800">Tab 2B</span>
+          <span>Khám phá Tích vô hướng</span>
+        </button>
+      </div>
+
+      <!-- ==================== TAB 2A: GHÉP GỐC XÁC ĐỊNH GÓC ==================== -->
+      <div id="panel-2a" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div class="lg:col-span-8 space-y-4">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <span id="t2a-instruction" class="text-sm sm:text-base font-bold text-slate-800">
+                👆 Dùng chuột hoặc ngón tay <strong>kéo vectơ màu cam</strong> tịnh tiến sao cho hai điểm đầu trùng nhau!
+              </span>
+              <span id="t2a-badge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-800">Chưa chung gốc</span>
+            </div>
+            <div class="canvas-box h-[350px] sm:h-[420px] bg-white">
+              <canvas id="canvas-2a"></canvas>
+            </div>
+          </div>
+
+          <!-- Giải thích trực quan khi ghép xong -->
+          <div id="t2a-feedback" class="hidden rounded-2xl p-4 sm:p-5 bg-emerald-50 border-2 border-emerald-400 text-emerald-950 shadow-sm">
+            <div class="flex items-start gap-3">
+              <span class="text-2xl">🎯</span>
+              <div>
+                <h4 id="t2a-fb-title" class="text-lg font-extrabold">Chính xác! Hai vectơ đã chung gốc.</h4>
+                <p id="t2a-fb-desc" class="text-sm sm:text-base mt-1"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-4">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <h3 class="text-lg font-extrabold text-slate-900">Chọn tình huống thực hành</h3>
+
+            <div class="space-y-2.5">
+              <button onclick="select2AScenario(1)" id="s2a-btn-1" class="s2a-case-btn w-full text-left p-3.5 rounded-2xl border-2 transition">
+                <div class="font-extrabold text-slate-900 text-base">1. Hai vectơ rời nhau <span class="vec">u</span>, <span class="vec">v</span></div>
+                <div class="text-xs sm:text-sm text-slate-600 mt-0.5">Tịnh tiến <span class="vec">v</span> về chung gốc với <span class="vec">u</span> để đo góc 60°.</div>
+              </button>
+
+              <button onclick="select2AScenario(2)" id="s2a-btn-2" class="s2a-case-btn w-full text-left p-3.5 rounded-2xl border-2 transition">
+                <div class="font-extrabold text-slate-900 text-base">2. Tam giác đều <span class="math-var">ABC</span> (Bẫy nối đuôi!)</div>
+                <div class="text-xs sm:text-sm text-slate-600 mt-0.5">Tìm góc (<span class="vec">AB</span>, <span class="vec">BC</span>). Cẩn thận: góc 60° hay 120°?</div>
+              </button>
+
+              <button onclick="select2AScenario(3)" id="s2a-btn-3" class="s2a-case-btn w-full text-left p-3.5 rounded-2xl border-2 transition">
+                <div class="font-extrabold text-slate-900 text-base">3. Tam giác vuông <span class="math-var">ABC</span> (Ví dụ 1 SGK)</div>
+                <div class="text-xs sm:text-sm text-slate-600 mt-0.5">Vuông tại <span class="math-var">A</span>, góc <span class="math-var">B</span> = 30°. Tìm (<span class="vec">AB</span>, <span class="vec">BC</span>) = 150°.</div>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2.5 pt-2 border-t border-slate-100">
+              <button onclick="animateSnap2A()" class="w-full py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-base shadow-md shadow-indigo-600/20 transition flex items-center justify-center gap-2">
+                ✨ Tịnh tiến về chung gốc
+              </button>
+              <button onclick="reset2AScenario()" class="w-full py-2.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm border border-slate-300 transition">
+                ↺ Đặt lại vị trí ban đầu
+              </button>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-xs sm:text-sm text-blue-950 leading-relaxed">
+              <strong>Quy tắc vàng (SGK trang 66):</strong> Muốn tìm góc (<span class="vec">u</span>, <span class="vec">v</span>), bắt buộc đưa hai vectơ về <strong>chung điểm đầu</strong>. Góc giữa hai vectơ luôn nằm trong đoạn <strong>[0°; 180°]</strong>.
+            </div>
+          </div>
+
+          <button onclick="switchTab2('2b')" class="w-full py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-sm transition">
+            Chuyển sang Tab 2B: Khám phá Tích vô hướng →
+          </button>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2B: KHÁM PHÁ TÍCH VÔ HƯỚNG ==================== -->
+      <div id="panel-2b" class="hidden space-y-5">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Cột trái: Canvas tương tác xoay vectơ -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <span class="text-sm sm:text-base font-bold text-slate-800">
+                  ✋ Kéo đầu mũi tên <span class="vec text-violet-700">b</span> (giới hạn 0° ≤ <span class="math-var">α</span> ≤ 180°) hoặc đầu <span class="vec text-blue-700">a</span>
+                </span>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-200 text-slate-700">Chung gốc O</span>
+              </div>
+              <div class="canvas-box h-[340px] sm:h-[400px] bg-white">
+                <canvas id="canvas-2b"></canvas>
+              </div>
+              <!-- Các nút Preset góc đặc biệt -->
+              <div class="p-4 bg-slate-50 border-t border-slate-200">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Chọn nhanh góc đặc biệt (<span class="math-var">α</span> ∈ [0°; 180°]):</div>
+                <div class="flex flex-wrap gap-1.5">
+                  <button onclick="set2BAngle(0)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-400 transition">0°</button>
+                  <button onclick="set2BAngle(30)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-400 transition">30°</button>
+                  <button onclick="set2BAngle(45)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-400 transition">45°</button>
+                  <button onclick="set2BAngle(60)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-400 transition">60°</button>
+                  <button onclick="set2BAngle(90)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-extrabold border-2 border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 transition">90° (⊥)</button>
+                  <button onclick="set2BAngle(120)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-400 transition">120°</button>
+                  <button onclick="set2BAngle(135)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-400 transition">135°</button>
+                  <button onclick="set2BAngle(150)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-400 transition">150°</button>
+                  <button onclick="set2BAngle(180)" class="s2b-preset px-3 py-1.5 rounded-xl text-sm font-bold border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-400 transition">180°</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột phải: Real-time HUD & Điều khiển -->
+          <div class="lg:col-span-5 space-y-4">
+            <!-- Bảng thông số thời gian thực -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <h3 class="text-lg font-extrabold text-slate-900">Bảng thông số trực tiếp</h3>
+                <!-- Nút gạt Ẩn / Hiện công thức (MẶC ĐỊNH ẨN) -->
+                <label class="inline-flex items-center gap-2 cursor-pointer select-none bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition">
+                  <input id="toggle-formula-cb" type="checkbox" onchange="toggleFormulaVisibility()" class="w-4 h-4 accent-indigo-600 rounded cursor-pointer" />
+                  <span id="toggle-formula-label" class="text-xs sm:text-sm font-bold text-slate-700">Hiện công thức</span>
+                </label>
+              </div>
+
+              <!-- 4 ô thông số -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="p-3 rounded-2xl bg-blue-50 border border-blue-200">
+                  <div class="text-xs font-bold text-blue-700">Độ dài |<span class="vec">a</span>|</div>
+                  <div id="hud-len-a" class="font-mono text-2xl font-extrabold text-blue-900 mt-0.5">3</div>
+                </div>
+                <div class="p-3 rounded-2xl bg-violet-50 border border-violet-200">
+                  <div class="text-xs font-bold text-violet-700">Độ dài |<span class="vec">b</span>|</div>
+                  <div id="hud-len-b" class="font-mono text-2xl font-extrabold text-violet-900 mt-0.5">4</div>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div class="text-xs font-bold text-slate-600">Góc <span class="math-var">α</span> = (<span class="vec">a</span>, <span class="vec">b</span>)</div>
+                  <div id="hud-angle" class="font-mono text-2xl font-extrabold text-slate-900 mt-0.5">60°</div>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div class="text-xs font-bold text-slate-600">Giá trị cos <span class="math-var">α</span></div>
+                  <div id="hud-cos" class="font-mono text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 min-h-[2rem] flex items-center">1/2 = 0,5</div>
+                </div>
+              </div>
+
+              <!-- Ô kết quả Tích vô hướng đổi màu thông minh -->
+              <div id="hud-dot-card" class="rounded-2xl p-4 border-2 bg-emerald-50 border-emerald-400 transition-all">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="text-sm font-extrabold text-slate-800">Tích vô hướng <span class="vec">a</span> · <span class="vec">b</span></span>
+                  <span id="hud-dot-status" class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-600 text-white">+ Dương (Góc nhọn)</span>
+                </div>
+
+                <div class="mt-2 flex items-baseline gap-3 flex-wrap">
+                  <span id="hud-dot-val" class="font-mono text-3xl sm:text-4xl font-extrabold text-emerald-700">6</span>
+                  <span id="hud-dot-exact" class="text-base font-bold text-slate-700"></span>
+                </div>
+
+                <!-- Khung Công thức (MẶC ĐỊNH ẨN để HS tự tìm quy luật) -->
+                <div id="hud-formula-hidden" class="mt-3 p-2.5 rounded-xl bg-white/80 border border-dashed border-slate-300 text-xs sm:text-sm text-slate-700 font-medium">
+                  🔍 <em>Công thức đang ẩn:</em> Hãy thay đổi |<span class="vec">a</span>|, |<span class="vec">b</span>|, <span class="math-var">α</span> và nhấn <strong>"Ghi nhận dữ liệu"</strong> để tự tìm mối liên hệ giữa 4 ô trên với kết quả <span class="vec">a</span> · <span class="vec">b</span>!
+                </div>
+                <div id="hud-formula-shown" class="hidden mt-3 p-3 rounded-xl bg-white border border-indigo-200 text-sm sm:text-base text-slate-900 font-bold">
+                  <div><span class="vec">a</span> · <span class="vec">b</span> = |<span class="vec">a</span>| · |<span class="vec">b</span>| · cos(<span class="vec">a</span>, <span class="vec">b</span>)</div>
+                  <div id="hud-formula-sub" class="font-mono text-sm text-indigo-700 mt-1">= 3 · 4 · cos(60°) = 6</div>
+                </div>
+
+                <!-- Nhãn nhấn mạnh Tích vô hướng là SỐ THỰC -->
+                <div class="mt-3 pt-2.5 border-t border-black/10 flex items-center gap-2 text-xs sm:text-sm font-extrabold text-slate-800">
+                  <span class="px-2 py-0.5 rounded bg-slate-900 text-white text-xs">CHÚ Ý</span>
+                  <span>Kết quả là một <u>SỐ THỰC</u> (không vẽ thành mũi tên, không phải vectơ!)</span>
+                </div>
+              </div>
+
+              <!-- 3 thanh trượt chỉnh trực tiếp -->
+              <div class="space-y-3 pt-1">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>|<span class="vec">a</span>|</span>
+                      <span id="s2b-a-txt" class="font-mono text-blue-700">3</span>
+                    </div>
+                    <input id="s2b-len-a" type="range" min="1" max="6" step="1" value="3" class="w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>|<span class="vec">b</span>|</span>
+                      <span id="s2b-b-txt" class="font-mono text-violet-700">4</span>
+                    </div>
+                    <input id="s2b-len-b" type="range" min="1" max="6" step="1" value="4" class="w-full" />
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                    <span>Góc <span class="math-var">α</span> (0° → 180°)</span>
+                    <span id="s2b-ang-txt" class="font-mono text-slate-900">60°</span>
+                  </div>
+                  <input id="s2b-angle" type="range" min="0" max="180" step="1" value="60" class="w-full" />
+                </div>
+              </div>
+
+              <!-- Nút Ghi nhận dữ liệu -->
+              <div class="flex gap-2.5 pt-1">
+                <button onclick="record2BTrial()" class="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-extrabold text-sm sm:text-base shadow-md shadow-indigo-600/20 transition flex items-center justify-center gap-2">
+                  📝 Ghi nhận dữ liệu (<span id="s2b-count">0</span>/6)
+                </button>
+                <button onclick="clear2BTrials()" class="py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm border border-slate-300 transition">
+                  Xóa bảng
+                </button>
+              </div>
+              <div id="s2b-toast" class="hidden text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-center"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng ghi nhận dữ liệu thực nghiệm -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-lg font-extrabold text-slate-900">Bảng ghi nhận dữ liệu thực nghiệm (tối đa 6 lần thử)</h3>
+              <p class="text-xs sm:text-sm text-slate-500">Quan sát mối liên hệ giữa |<span class="vec">a</span>|, |<span class="vec">b</span>|, cos <span class="math-var">α</span> và kết quả <span class="vec">a</span> · <span class="vec">b</span> để tự rút ra định nghĩa!</p>
+            </div>
+            <button onclick="switchStation(3)" class="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
+              Sang Trạm 3: Đúc kết kiến thức →
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm sm:text-base">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700">
+                  <th class="py-2.5 px-3 rounded-l-xl font-bold">Lần</th>
+                  <th class="py-2.5 px-3 font-bold">|<span class="vec">a</span>|</th>
+                  <th class="py-2.5 px-3 font-bold">|<span class="vec">b</span>|</th>
+                  <th class="py-2.5 px-3 font-bold">Góc <span class="math-var">α</span></th>
+                  <th class="py-2.5 px-3 font-bold">cos <span class="math-var">α</span></th>
+                  <th class="py-2.5 px-3 font-bold">Kết quả <span class="vec">a</span> · <span class="vec">b</span></th>
+                  <th class="py-2.5 px-3 rounded-r-xl font-bold">Nhận xét dấu</th>
+                </tr>
+              </thead>
+              <tbody id="s2b-table-body" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="7" class="py-6 text-center text-slate-400 italic">
+                    Chưa có dữ liệu. Hãy chọn các góc đặc biệt (0°, 60°, 90°, 120°, 180°) và bấm <strong>"Ghi nhận dữ liệu"</strong>!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================
+         TRẠM 3: ĐÚC KẾT KIẾN THỨC – PHIẾU TỰ KHÁM PHÁ ĐIỆN TỬ
+         =================================================== -->
+    <section id="station-3" class="station-section hidden space-y-6">
+      <div class="bg-gradient-to-r from-emerald-700 via-teal-600 to-cyan-600 text-white rounded-3xl p-5 sm:p-6 shadow-md">
+        <span class="inline-block text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-2">
+          Trạm 3 • Pha Khái quát hóa lý thuyết (Abstract Conceptualization)
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Phiếu tự khám phá điện tử &amp; Thẻ ghi nhớ SGK</h2>
+        <p class="text-emerald-50 text-sm sm:text-base mt-1">
+          Từ những quan sát ở Trạm 1 và Trạm 2, hãy tự hoàn thành 3 câu hỏi đúc kết dưới đây trước khi mở Thẻ ghi nhớ chuẩn SGK!
+        </p>
+      </div>
+
+      <!-- 3 Câu hỏi tự khám phá -->
+      <div class="grid grid-cols-1 gap-5">
+        <!-- Câu 1 -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6">
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-xl bg-teal-100 text-teal-800 font-extrabold flex items-center justify-center shrink-0 text-lg">1</span>
+            <div class="flex-1">
+              <h3 class="text-base sm:text-lg font-extrabold text-slate-900">
+                Với hai vectơ <span class="vec">a</span>, <span class="vec">b</span> đều <u>khác vectơ-không</u> (<span class="vec">a</span> ≠ <span class="vec vec-zero">0</span>, <span class="vec">b</span> ≠ <span class="vec vec-zero">0</span>), dấu của tích vô hướng <span class="vec">a</span> · <span class="vec">b</span> do yếu tố nào quyết định?
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4" id="s3-q1-options">
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q1" value="A" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-semibold text-slate-800">Độ dài |<span class="vec">a</span>| và |<span class="vec">b</span>| của hai vectơ.</span>
+                </label>
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q1" value="B" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-semibold text-slate-800">Dấu của cos(<span class="vec">a</span>, <span class="vec">b</span>) (góc nhọn → dương, góc tù → âm).</span>
+                </label>
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q1" value="C" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-semibold text-slate-800">Dấu của sin(<span class="vec">a</span>, <span class="vec">b</span>).</span>
+                </label>
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q1" value="D" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-semibold text-slate-800">Vị trí đặt điểm gốc <span class="math-var">O</span> trên mặt phẳng.</span>
+                </label>
+              </div>
+              <div id="s3-fb-1" class="hidden mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Câu 2 -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6">
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-xl bg-teal-100 text-teal-800 font-extrabold flex items-center justify-center shrink-0 text-lg">2</span>
+            <div class="flex-1">
+              <h3 class="text-base sm:text-lg font-extrabold text-slate-900">
+                Điều kiện cần và đủ để hai vectơ <span class="vec">a</span> và <span class="vec">b</span> vuông góc với nhau (<span class="vec">a</span> ⊥ <span class="vec">b</span>) là gì?
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4" id="s3-q2-options">
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q2" value="A" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-bold text-slate-800 text-lg"><span class="vec">a</span> · <span class="vec">b</span> = <span class="vec vec-zero">0</span></span>
+                </label>
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q2" value="B" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-bold text-slate-800 text-lg"><span class="vec">a</span> · <span class="vec">b</span> = 0</span>
+                </label>
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q2" value="C" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-bold text-slate-800 text-lg"><span class="vec">a</span> · <span class="vec">b</span> = 1</span>
+                </label>
+                <label class="s3-opt flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 hover:border-teal-400 cursor-pointer transition">
+                  <input type="radio" name="s3-q2" value="D" class="w-5 h-5 accent-teal-600" />
+                  <span class="font-bold text-slate-800 text-lg">|<span class="vec">a</span>| = |<span class="vec">b</span>|</span>
+                </label>
+              </div>
+              <div id="s3-fb-2" class="hidden mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Câu 3 (Điền khuyết tương tác bằng thẻ chọn) -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6">
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-xl bg-teal-100 text-teal-800 font-extrabold flex items-center justify-center shrink-0 text-lg">3</span>
+            <div class="flex-1">
+              <h3 class="text-base sm:text-lg font-extrabold text-slate-900">
+                Chọn kết quả thích hợp điền vào hai ô trống cho trường hợp hai vectơ cùng hướng và ngược hướng:
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <!-- Ô 3a: Cùng hướng -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div class="font-bold text-slate-800 mb-2.5">
+                    a) Khi <span class="vec">a</span>, <span class="vec">b</span> <strong>cùng hướng</strong> (<span class="math-var">α</span> = 0°):
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="pickS3Q3('same', 'pos')" data-q3="same-pos" class="q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition">|<span class="vec">a</span>| · |<span class="vec">b</span>|</button>
+                    <button type="button" onclick="pickS3Q3('same', 'neg')" data-q3="same-neg" class="q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition">−|<span class="vec">a</span>| · |<span class="vec">b</span>|</button>
+                    <button type="button" onclick="pickS3Q3('same', 'zero')" data-q3="same-zero" class="q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition">0</button>
+                  </div>
+                </div>
+
+                <!-- Ô 3b: Ngược hướng -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div class="font-bold text-slate-800 mb-2.5">
+                    b) Khi <span class="vec">a</span>, <span class="vec">b</span> <strong>ngược hướng</strong> (<span class="math-var">α</span> = 180°):
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="pickS3Q3('opp', 'pos')" data-q3="opp-pos" class="q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition">|<span class="vec">a</span>| · |<span class="vec">b</span>|</button>
+                    <button type="button" onclick="pickS3Q3('opp', 'neg')" data-q3="opp-neg" class="q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition">−|<span class="vec">a</span>| · |<span class="vec">b</span>|</button>
+                    <button type="button" onclick="pickS3Q3('opp', 'zero')" data-q3="opp-zero" class="q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition">0</button>
+                  </div>
+                </div>
+              </div>
+              <div id="s3-fb-3" class="hidden mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh hành động Trạm 3 -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap gap-3">
+          <button onclick="checkS3Quiz()" class="py-3.5 px-6 rounded-2xl bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white font-extrabold text-base shadow-md shadow-teal-600/20 transition">
+            ✓ Kiểm tra kết quả
+          </button>
+          <button onclick="resetS3Quiz()" class="py-3.5 px-5 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-base border border-slate-300 transition">
+            ↺ Làm lại phiếu
+          </button>
+        </div>
+
+        <button id="toggle-sgk-btn" onclick="toggleSGKCard()" class="py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] text-white font-extrabold text-base shadow-lg shadow-amber-500/25 transition flex items-center gap-2">
+          <span>📘</span> Xem thẻ ghi nhớ chuẩn SGK (Kết nối tri thức)
+        </button>
+      </div>
+
+      <div id="s3-summary-msg" class="hidden p-4 rounded-2xl font-bold text-base"></div>
+
+      <!-- THẺ GHI NHỚ CHUẨN SGK (ĐẦY ĐỦ 5 NỘI DUNG BẮT BUỘC) -->
+      <div id="sgk-card" class="hidden bg-white rounded-3xl border-4 border-blue-600 shadow-xl overflow-hidden">
+        <div class="bg-blue-600 text-white px-6 py-4 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">📘</span>
+            <div>
+              <h3 class="text-xl sm:text-2xl font-extrabold">THẺ GHI NHỚ CHUẨN SGK (TOÁN 10 – KẾT NỐI TRI THỨC)</h3>
+              <p class="text-blue-100 text-xs sm:text-sm">Bài 11. Tích vô hướng của hai vectơ (Trang 66 – 67)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 sm:p-7 space-y-4">
+          <!-- Mục 1 -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-full bg-blue-600 text-white font-extrabold flex items-center justify-center shrink-0">1</span>
+            <div class="text-base sm:text-lg text-slate-800 leading-relaxed">
+              <strong class="text-blue-900">Góc giữa hai vectơ:</strong> Với hai vectơ <span class="vec">a</span>, <span class="vec">b</span> khác <span class="vec vec-zero">0</span>, vẽ chung gốc <span class="math-var">O</span> để xác định góc (<span class="vec">a</span>, <span class="vec">b</span>) ∈ <strong>[0°; 180°]</strong>.
+              <div class="mt-1 text-slate-700">
+                • <em>Quy ước:</em> Góc giữa một vectơ bất kì với vectơ-không <span class="vec vec-zero">0</span> là <strong>tùy ý từ 0° đến 180°</strong>.
+              </div>
+            </div>
+          </div>
+
+          <!-- Mục 2 -->
+          <div class="p-4 rounded-2xl bg-blue-50 border-2 border-blue-300 flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-full bg-blue-600 text-white font-extrabold flex items-center justify-center shrink-0">2</span>
+            <div class="text-base sm:text-lg text-slate-900 leading-relaxed">
+              <strong class="text-blue-900">Định nghĩa tích vô hướng:</strong> Tích vô hướng của hai vectơ <span class="vec">a</span> và <span class="vec">b</span> là một <strong>SỐ THỰC</strong>, kí hiệu <span class="vec">a</span> · <span class="vec">b</span>, xác định bởi công thức:
+              <div class="mt-2 inline-block px-5 py-2.5 rounded-xl bg-white border-2 border-blue-500 font-extrabold text-xl sm:text-2xl text-blue-900 shadow-sm">
+                <span class="vec">a</span> · <span class="vec">b</span> = |<span class="vec">a</span>| · |<span class="vec">b</span>| · cos(<span class="vec">a</span>, <span class="vec">b</span>)
+              </div>
+            </div>
+          </div>
+
+          <!-- Mục 3 -->
+          <div class="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-full bg-rose-600 text-white font-extrabold flex items-center justify-center shrink-0">3</span>
+            <div class="text-base sm:text-lg text-slate-900 leading-relaxed">
+              <strong class="text-rose-900">Quy ước với vectơ-không:</strong>
+              <span class="ml-2 px-3 py-1 rounded-lg bg-white border border-rose-300 font-extrabold text-xl">
+                <span class="vec">a</span> · <span class="vec vec-zero">0</span> = 0
+              </span>
+              <span class="inline-block mt-2 sm:mt-0 sm:ml-2 px-3 py-1 rounded-lg bg-rose-600 text-white text-xs sm:text-sm font-extrabold">
+                ⚠ CHÚ Ý: Là SỐ 0, KHÔNG viết <span class="vec vec-zero text-white">0</span> !
+              </span>
+            </div>
+          </div>
+
+          <!-- Mục 4 -->
+          <div class="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-full bg-amber-500 text-white font-extrabold flex items-center justify-center shrink-0">4</span>
+            <div class="text-base sm:text-lg text-slate-900 leading-relaxed">
+              <strong class="text-amber-900">Điều kiện vuông góc:</strong>
+              <span class="ml-2 px-3 py-1 rounded-lg bg-white border border-amber-300 font-extrabold text-xl">
+                <span class="vec">a</span> ⊥ <span class="vec">b</span> ⇔ <span class="vec">a</span> · <span class="vec">b</span> = 0
+              </span>
+              <span class="inline-block mt-2 sm:mt-0 sm:ml-2 px-3 py-1 rounded-lg bg-amber-600 text-white text-xs sm:text-sm font-extrabold">
+                ⚠ CHÚ Ý: Là SỐ 0, KHÔNG viết <span class="vec vec-zero text-white">0</span> !
+              </span>
+            </div>
+          </div>
+
+          <!-- Mục 5 -->
+          <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-full bg-emerald-600 text-white font-extrabold flex items-center justify-center shrink-0">5</span>
+            <div class="text-base sm:text-lg text-slate-900 leading-relaxed">
+              <strong class="text-emerald-900">Bình phương vô hướng:</strong> Bình phương vô hướng của một vectơ bằng bình phương độ dài của vectơ đó:
+              <span class="ml-2 px-3 py-1 rounded-lg bg-white border border-emerald-300 font-extrabold text-xl">
+                <span class="vec">a</span><sup>2</sup> = <span class="vec">a</span> · <span class="vec">a</span> = |<span class="vec">a</span>|<sup>2</sup>
+              </span>
+            </div>
+          </div>
+
+          <div class="pt-2 flex justify-end">
+            <button onclick="switchStation(4)" class="py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-base shadow transition">
+              Sẵn sàng vào Trạm 4: Đấu trường Vectơ 🏆 →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================
+         TRẠM 4: THỬ THÁCH NHANH – "ĐẤU TRƯỜNG VECTƠ"
+         =================================================== -->
+    <section id="station-4" class="station-section hidden space-y-5">
+      <div class="bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-600 text-white rounded-3xl p-5 sm:p-6 shadow-md">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="inline-block text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-2">
+              Trạm 4 • Pha Thử nghiệm tích cực (Active Experimentation)
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold">🏆 Đấu trường Vectơ (5 Thử thách nhanh)</h2>
+            <p class="text-purple-100 text-sm sm:text-base mt-1">
+              Áp dụng kiến thức vừa khám phá để vượt qua cả 5 câu hỏi hình học và bài toán công cơ học thực tiễn!
+            </p>
+          </div>
+
+          <!-- Bảng điểm thi đua -->
+          <div class="flex items-center gap-3">
+            <div class="bg-white/15 backdrop-blur border border-white/25 rounded-2xl px-4 py-2.5 text-center min-w-[110px]">
+              <div class="text-xs font-bold uppercase tracking-wider text-purple-100">Điểm nhóm</div>
+              <div id="arena-score" class="font-mono text-2xl sm:text-3xl font-extrabold text-yellow-300">0</div>
+            </div>
+            <button onclick="toggleSound()" class="bg-white/15 hover:bg-white/25 border border-white/25 rounded-2xl px-3.5 py-3 text-sm font-bold transition flex items-center gap-1.5" title="Bật/tắt âm thanh">
+              <span id="arena-sound-icon">🔊</span>
+              <span class="hidden sm:inline" id="arena-sound-txt">Âm thanh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Thanh tiến độ 5 câu -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-xs font-bold text-purple-100 mb-1.5">
+            <span id="arena-progress-label">Câu hỏi 1 / 5</span>
+            <span id="arena-streak-badge" class="hidden px-2.5 py-0.5 rounded-full bg-yellow-400 text-slate-900 font-extrabold">🔥 Chuỗi đúng: 0</span>
+          </div>
+          <div class="grid grid-cols-5 gap-2" id="arena-progress-bars">
+            <div class="h-2.5 rounded-full bg-white/30"></div>
+            <div class="h-2.5 rounded-full bg-white/30"></div>
+            <div class="h-2.5 rounded-full bg-white/30"></div>
+            <div class="h-2.5 rounded-full bg-white/30"></div>
+            <div class="h-2.5 rounded-full bg-white/30"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khung hiển thị câu hỏi hiện tại -->
+      <div id="arena-question-card" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <!-- Hình vẽ SVG minh họa sắc nét -->
+          <div class="lg:col-span-5 flex flex-col items-center justify-center bg-slate-50 rounded-2xl border border-slate-200 p-4 min-h-[260px]">
+            <div id="arena-svg-container" class="w-full max-w-[340px]"></div>
+            <p id="arena-svg-caption" class="text-xs font-semibold text-slate-500 mt-2 text-center"></p>
+          </div>
+
+          <!-- Nội dung câu hỏi & 4 phương án -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="arena-q-tag" class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-purple-100 text-purple-800">Câu 1</span>
+              <span id="arena-q-category" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">Hình học phẳng</span>
+            </div>
+
+            <h3 id="arena-q-text" class="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug"></h3>
+
+            <div id="arena-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1"></div>
+
+            <!-- Hộp lời giải chi tiết sau khi chọn -->
+            <div id="arena-explanation" class="hidden rounded-2xl p-4 sm:p-5 border-2 space-y-2">
+              <div id="arena-exp-header" class="text-lg font-extrabold flex items-center gap-2"></div>
+              <div id="arena-exp-body" class="text-sm sm:text-base text-slate-800 leading-relaxed space-y-1"></div>
+              <div class="pt-2 flex justify-end">
+                <button id="arena-next-btn" onclick="nextArenaQuestion()" class="py-3 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-base transition shadow">
+                  Câu tiếp theo →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bảng tổng kết sau khi hoàn thành 5 câu -->
+      <div id="arena-summary-card" class="hidden bg-white rounded-3xl border-2 border-purple-300 shadow-lg p-6 sm:p-8 text-center space-y-5">
+        <div id="arena-medal" class="text-6xl">🏆</div>
+        <div>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Hoàn thành Đấu trường Vectơ!</h3>
+          <p id="arena-final-comment" class="text-base sm:text-lg text-slate-700 font-medium mt-2 max-w-2xl mx-auto"></p>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-4">
+          <div class="px-6 py-4 rounded-2xl bg-purple-50 border-2 border-purple-200 min-w-[150px]">
+            <div class="text-xs font-bold uppercase text-purple-700">Tổng điểm</div>
+            <div id="arena-final-score" class="font-mono text-4xl font-extrabold text-purple-900 mt-1">100</div>
+          </div>
+          <div class="px-6 py-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 min-w-[150px]">
+            <div class="text-xs font-bold uppercase text-emerald-700">Số câu đúng</div>
+            <div id="arena-final-correct" class="font-mono text-4xl font-extrabold text-emerald-700 mt-1">5 / 5</div>
+          </div>
+        </div>
+
+        <!-- Tóm tắt kết quả từng câu -->
+        <div id="arena-review-list" class="max-w-2xl mx-auto text-left space-y-2 pt-2"></div>
+
+        <div class="flex flex-wrap justify-center gap-3 pt-2">
+          <button onclick="restartArena()" class="py-3.5 px-7 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-base shadow-md shadow-purple-600/25 transition">
+            🔄 Chơi lại Đấu trường
+          </button>
+          <button onclick="switchStation(3)" class="py-3.5 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-base border border-slate-300 transition">
+            📘 Ôn lại Thẻ ghi nhớ SGK
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs sm:text-sm text-slate-500">
+    Học liệu số tương tác Toán 10 – <strong>Bài 11. Tích vô hướng của hai vectơ</strong> (SGK Kết nối tri thức với cuộc sống) • Thiết kế theo chu trình Học tập Trải nghiệm Kolb
+  </footer>
+
+  <!-- =====================================================
+       JAVASCRIPT LOGIC CHO TOÀN BỘ 4 TRẠM
+       ===================================================== -->
+  <script>
+    /* =====================================================
+       TIỆN ÍCH CHUNG: ÂM THANH (WEB AUDIO API) & PHÁO HOA
+       ===================================================== */
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freqs, durations, type = 'sine', gainVal = 0.12) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        let now = ctx.currentTime;
+        freqs.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(f, now);
+          g.gain.setValueAtTime(gainVal, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + durations[idx]);
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + durations[idx]);
+          now += durations[idx] * 0.85;
+        });
+      } catch (e) {
+        // Bỏ qua nếu trình duyệt chặn audio
+      }
+    }
+
+    function playCorrectSound() {
+      playTone([523.25, 659.25, 783.99], [0.12, 0.12, 0.25], 'triangle', 0.15);
+    }
+
+    function playWrongSound() {
+      playTone([280, 220], [0.14, 0.22], 'sawtooth', 0.08);
+    }
+
+    function playSnapSound() {
+      playTone([660, 880], [0.08, 0.14], 'sine', 0.12);
+    }
+
+    function playFanfareSound() {
+      playTone([523.25, 659.25, 783.99, 1046.5], [0.12, 0.12, 0.12, 0.4], 'triangle', 0.16);
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = soundEnabled ? '🔊' : '🔇';
+      const txt = soundEnabled ? 'Âm thanh' : 'Đã tắt';
+      document.getElementById('sound-icon-mobile').textContent = icon;
+      document.getElementById('sound-icon-desktop').textContent = icon;
+      document.getElementById('sound-text-desktop').textContent = txt;
+      document.getElementById('arena-sound-icon').textContent = icon;
+      document.getElementById('arena-sound-txt').textContent = txt;
+      if (soundEnabled) playTone([587.33], [0.1], 'sine', 0.1);
+    }
+
+    // Định dạng số thập phân chuẩn tiếng Việt (dấu phẩy)
+    function fmtVN(num, decimals = 1) {
+      if (Math.abs(num) < 1e-9) num = 0;
+      const fixed = Number(num.toFixed(decimals));
+      return fixed.toString().replace('.', ',');
+    }
+
+    // Hiệu ứng pháo hoa Confetti
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    let confettiParticles = [];
+    let confettiAnimId = null;
+
+    function resizeConfetti() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+
+    function launchConfetti(count = 70) {
+      resizeConfetti();
+      const colors = ['#2563eb', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: window.innerWidth * (0.2 + Math.random() * 0.6),
+          y: window.innerHeight * 0.35 + (Math.random() - 0.5) * 80,
+          vx: (Math.random() - 0.5) * 14,
+          vy: -Math.random() * 11 - 3,
+          size: Math.random() * 7 + 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rot: Math.random() * Math.PI * 2,
+          vrot: (Math.random() - 0.5) * 0.25,
+          life: 1.0,
+        });
+      }
+      if (!confettiAnimId) animateConfetti();
+    }
+
+    function animateConfetti() {
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiParticles = confettiParticles.filter(p => p.life > 0 && p.y < confettiCanvas.height + 20);
+      for (const p of confettiParticles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.32;
+        p.vx *= 0.99;
+        p.rot += p.vrot;
+        p.life -= 0.014;
+        confettiCtx.save();
+        confettiCtx.globalAlpha = Math.max(0, p.life);
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate(p.rot);
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+        confettiCtx.restore();
+      }
+      if (confettiParticles.length > 0) {
+        confettiAnimId = requestAnimationFrame(animateConfetti);
+      } else {
+        confettiAnimId = null;
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      }
+    }
+
+    /* =====================================================
+       ĐIỀU HƯỚNG 4 TRẠM & TAB 2A / 2B
+       ===================================================== */
+    let currentStation = 1;
+    let currentTab2 = '2a';
+
+    function switchStation(num) {
+      currentStation = num;
+      document.querySelectorAll('.station-section').forEach((sec, i) => {
+        sec.classList.toggle('hidden', i + 1 !== num);
+      });
+
+      const activeColors = {
+        1: ['bg-blue-600', 'text-white', 'border-blue-600', 'shadow-sm'],
+        2: ['bg-indigo-600', 'text-white', 'border-indigo-600', 'shadow-sm'],
+        3: ['bg-teal-600', 'text-white', 'border-teal-600', 'shadow-sm'],
+        4: ['bg-purple-600', 'text-white', 'border-purple-600', 'shadow-sm'],
+      };
+
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`nav-station-${i}`);
+        const badge = btn.querySelector('span:first-child');
+        btn.className = 'station-nav-btn px-3 sm:px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 border-2';
+        if (i === num) {
+          btn.classList.add(...activeColors[i]);
+          badge.className = 'w-6 h-6 rounded-full text-xs flex items-center justify-center font-extrabold bg-white/25 text-white';
+        } else {
+          btn.classList.add('bg-white', 'text-slate-700', 'border-slate-200', 'hover:bg-slate-50', 'hover:border-slate-300');
+          badge.className = 'w-6 h-6 rounded-full text-xs flex items-center justify-center font-extrabold bg-slate-200 text-slate-700';
+        }
+      }
+
+      // Cập nhật lại kích thước Canvas sau khi hiển thị
+      requestAnimationFrame(() => {
+        if (num === 1) resizeAndDrawS1();
+        if (num === 2) {
+          if (currentTab2 === '2a') resizeAndDraw2A();
+          else resizeAndDraw2B();
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function switchTab2(tab) {
+      currentTab2 = tab;
+      const p2a = document.getElementById('panel-2a');
+      const p2b = document.getElementById('panel-2b');
+      const b2a = document.getElementById('tab2a-btn');
+      const b2b = document.getElementById('tab2b-btn');
+
+      if (tab === '2a') {
+        p2a.classList.remove('hidden');
+        p2b.classList.add('hidden');
+        b2a.className = 'flex-1 min-w-[240px] py-3.5 px-5 rounded-2xl font-extrabold text-base sm:text-lg border-2 border-indigo-600 bg-indigo-600 text-white transition flex items-center justify-center gap-2.5 shadow-md';
+        b2b.className = 'flex-1 min-w-[240px] py-3.5 px-5 rounded-2xl font-extrabold text-base sm:text-lg border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition flex items-center justify-center gap-2.5 shadow-sm';
+        requestAnimationFrame(resizeAndDraw2A);
+      } else {
+        p2a.classList.add('hidden');
+        p2b.classList.remove('hidden');
+        b2b.className = 'flex-1 min-w-[240px] py-3.5 px-5 rounded-2xl font-extrabold text-base sm:text-lg border-2 border-emerald-600 bg-emerald-600 text-white transition flex items-center justify-center gap-2.5 shadow-md';
+        b2a.className = 'flex-1 min-w-[240px] py-3.5 px-5 rounded-2xl font-extrabold text-base sm:text-lg border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition flex items-center justify-center gap-2.5 shadow-sm';
+        requestAnimationFrame(resizeAndDraw2B);
+      }
+    }
+
+    /* =====================================================
+       HÀM HỖ TRỢ VẼ MŨI TÊN VECTƠ TRÊN CANVAS
+       ===================================================== */
+    function drawCanvasArrow(ctx, x1, y1, x2, y2, color, width = 3.5, headLen = 13, dashed = false) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 2) return;
+      const angle = Math.atan2(dy, dx);
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      if (dashed) ctx.setLineDash([7, 5]);
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2 - Math.cos(angle) * (headLen * 0.65), y2 - Math.sin(angle) * (headLen * 0.65));
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6.5), y2 - headLen * Math.sin(angle - Math.PI / 6.5));
+      ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6.5), y2 - headLen * Math.sin(angle + Math.PI / 6.5));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Vẽ nhãn vectơ có mũi tên nhỏ trên đầu trong Canvas
+    function drawVectorLabel(ctx, text, x, y, color = '#0f172a', fontSize = 16) {
+      ctx.save();
+      ctx.font = `italic 700 ${fontSize}px "Times New Roman", Georgia, serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x, y);
+
+      const tw = ctx.measureText(text).width;
+      const ay = y - fontSize * 0.62;
+      const ax1 = x - tw / 2 - 1;
+      const ax2 = x + tw / 2 + 2;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(ax1, ay);
+      ctx.lineTo(ax2, ay);
+      ctx.moveTo(ax2 - 4, ay - 2.5);
+      ctx.lineTo(ax2, ay);
+      ctx.lineTo(ax2 - 4, ay + 2.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function setupHiDPICanvas(canvas) {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, w: rect.width, h: rect.height };
+    }
+
+    /* =====================================================
+       TRẠM 1: MÔ PHỎNG VẬT LÝ "XE GOÒNG TRÊN ĐƯỜNG RAY"
+       Đảm bảo: 1/2 * m * v0^2 = 0.5 * 16 * 144 = 1152 J > 1000 J (F_max * d_max)
+       => Ngay cả tại α = 180°, F = 100 N, d = 10 m thì v_N = √19 ≈ 4.36 m/s > 0!
+       ===================================================== */
+    const s1State = {
+      angleDeg: 30,
+      force: 60,       // 10..100 N
+      distance: 8,     // 2..10 m
+      mass: 16,        // kg
+      v0: 12.0,        // m/s
+      pos: 0,          // m (0..distance)
+      vel: 12.0,       // m/s
+      wheelAngle: 0,
+      running: false,
+      finished: false,
+      animId: null,
+      lastTime: null,
+    };
+
+    const s1Canvas = document.getElementById('canvas-s1');
+
+    function getS1Physics() {
+      const rad = (s1State.angleDeg * Math.PI) / 180;
+      const cosA = s1State.angleDeg === 90 ? 0 : Math.cos(rad);
+      const sinA = s1State.angleDeg === 0 || s1State.angleDeg === 180 ? 0 : Math.sin(rad);
+      const fPar = s1State.force * cosA;
+      const fPerp = s1State.force * sinA;
+      const acc = fPar / s1State.mass;
+      const work = fPar * s1State.distance;
+      const vFinal = Math.sqrt(Math.max(0.01, s1State.v0 * s1State.v0 + 2 * acc * s1State.distance));
+      return { rad, cosA, sinA, fPar, fPerp, acc, work, vFinal };
+    }
+
+    function updateS1UI() {
+      const { cosA, work, vFinal } = getS1Physics();
+      const ang = s1State.angleDeg;
+
+      document.getElementById('s1-angle-val').textContent = `${ang}°`;
+      document.getElementById('s1-force-val').textContent = `${s1State.force} N`;
+      document.getElementById('s1-dist-val').textContent = `${s1State.distance} m`;
+      document.getElementById('s1-angle-slider').value = ang;
+      document.getElementById('s1-force-slider').value = s1State.force;
+      document.getElementById('s1-dist-slider').value = s1State.distance;
+
+      // Vận tốc tức thời trên đồng hồ
+      const vel = s1State.vel;
+      document.getElementById('s1-vel-text').textContent = `${fmtVN(vel, 2)} m/s`;
+      const pct = Math.min(100, Math.max(4, (vel / 20) * 100));
+      const vBar = document.getElementById('s1-vel-bar');
+      vBar.style.width = `${pct}%`;
+
+      // Công cơ học (J)
+      const signPrefix = work > 0.001 ? '+' : '';
+      document.getElementById('s1-work-value').textContent = `${signPrefix}${fmtVN(work, 1)} J`;
+      document.getElementById('s1-work-formula').textContent = `${s1State.force} · ${s1State.distance} · cos(${ang}°)`;
+
+      const workCard = document.getElementById('s1-work-card');
+      const workValEl = document.getElementById('s1-work-value');
+      const workBadge = document.getElementById('s1-work-sign-badge');
+      const banner = document.getElementById('s1-status-banner');
+      const sIcon = document.getElementById('s1-status-icon');
+      const sTitle = document.getElementById('s1-status-title');
+      const sDesc = document.getElementById('s1-status-desc');
+
+      if (ang < 90) {
+        vBar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-75';
+        workCard.className = 'rounded-2xl p-3.5 border-2 bg-emerald-50 border-emerald-400 transition-colors';
+        workValEl.className = 'font-mono text-2xl sm:text-3xl font-extrabold text-emerald-700';
+        workBadge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white';
+        workBadge.textContent = 'A > 0 (Công phát động)';
+
+        banner.className = 'rounded-2xl p-4 sm:p-5 border-2 bg-emerald-50 border-emerald-400 text-emerald-950 transition-all shadow-sm';
+        sIcon.className = 'w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-2xl shrink-0 font-bold';
+        sIcon.textContent = '🚀';
+        sTitle.textContent = 'Góc nhọn (α < 90°): Công phát động (A > 0)';
+        sDesc.innerHTML = `Thành phần lực song song cùng chiều chuyển động <span class="vec">MN</span> → Xe chuyển động <strong>NHANH DẦN</strong> (vận tốc tăng từ <strong>12,00 m/s</strong> lên <strong>${fmtVN(vFinal, 2)} m/s</strong>).`;
+      } else if (ang === 90) {
+        vBar.className = 'h-full bg-amber-500 rounded-full transition-all duration-75';
+        workCard.className = 'rounded-2xl p-3.5 border-2 bg-amber-50 border-amber-400 perp-glow transition-colors';
+        workValEl.className = 'font-mono text-2xl sm:text-3xl font-extrabold text-amber-700';
+        workBadge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500 text-white';
+        workBadge.textContent = 'A = 0 (Không sinh công)';
+
+        banner.className = 'rounded-2xl p-4 sm:p-5 border-2 bg-amber-50 border-amber-400 text-amber-950 transition-all shadow-sm';
+        sIcon.className = 'w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center text-2xl shrink-0 font-bold';
+        sIcon.textContent = '⚖️';
+        sTitle.textContent = 'Góc vuông (α = 90°): Lực không sinh công (A = 0 J)';
+        sDesc.innerHTML = `Lực <span class="vec">F</span> vuông góc hoàn toàn với đường ray và bị phản lực của ray triệt tiêu → Xe tiếp tục <strong>CHUYỂN ĐỘNG ĐỀU</strong> từ <span class="math-var">M</span> đến <span class="math-var">N</span> với <strong>vận tốc không đổi 12,00 m/s</strong>.`;
+      } else {
+        vBar.className = 'h-full bg-rose-500 rounded-full transition-all duration-75';
+        workCard.className = 'rounded-2xl p-3.5 border-2 bg-rose-50 border-rose-400 transition-colors';
+        workValEl.className = 'font-mono text-2xl sm:text-3xl font-extrabold text-rose-700';
+        workBadge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-rose-600 text-white';
+        workBadge.textContent = 'A < 0 (Công cản)';
+
+        banner.className = 'rounded-2xl p-4 sm:p-5 border-2 bg-rose-50 border-rose-400 text-rose-950 transition-all shadow-sm';
+        sIcon.className = 'w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center text-2xl shrink-0 font-bold';
+        sIcon.textContent = '🛑';
+        sTitle.textContent = 'Góc tù (α > 90°): Công cản (A < 0)';
+        sDesc.innerHTML = `Thành phần lực song song ngược chiều chuyển động <span class="vec">MN</span> → Xe bị hãm, chuyển động <strong>CHẬM DẦN</strong> đi tới <span class="math-var">N</span> (vận tốc giảm từ <strong>12,00 m/s</strong> xuống <strong>${fmtVN(vFinal, 2)} m/s</strong>).`;
+      }
+
+      // Highlight nút góc đang chọn
+      document.querySelectorAll('.s1-preset').forEach(btn => {
+        const val = parseInt(btn.textContent, 10);
+        if (val === ang) {
+          btn.classList.add('ring-2', 'ring-blue-600', 'bg-blue-600', 'text-white', 'border-blue-600');
+          btn.classList.remove('bg-slate-50', 'bg-amber-50', 'text-amber-800');
+        } else {
+          btn.classList.remove('ring-2', 'ring-blue-600', 'bg-blue-600', 'text-white', 'border-blue-600');
+          if (val === 90) btn.classList.add('bg-amber-50', 'text-amber-800');
+          else btn.classList.add('bg-slate-50');
+        }
+      });
+    }
+
+    function drawS1() {
+      const { ctx, w, h } = setupHiDPICanvas(s1Canvas);
+      const { rad, cosA, sinA } = getS1Physics();
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Các tọa độ nền
+      const railY = h * 0.72;
+      const trackLeft = Math.max(46, w * 0.08);
+      const trackRight = w - Math.max(46, w * 0.08);
+      const maxTrackPx = trackRight - trackLeft;
+
+      // M cố định bên trái, N tỷ lệ theo distance (2m..10m -> 35%..100% chiều dài ray)
+      const mX = trackLeft + 34;
+      const usablePx = Math.max(120, maxTrackPx - 80);
+      const distRatio = 0.25 + 0.75 * ((s1State.distance - 2) / 8);
+      const nX = mX + usablePx * distRatio;
+
+      // Nền đất phía dưới ray
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(0, railY + 8, w, h - railY - 8);
+
+      // Thanh tà vẹt đường ray
+      ctx.fillStyle = '#94a3b8';
+      for (let x = trackLeft - 10; x < trackRight + 10; x += 26) {
+        ctx.fillRect(x, railY + 2, 12, 8);
+      }
+
+      // Thanh ray thép nằm ngang
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(trackLeft - 20, railY - 3, maxTrackPx + 40, 7);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(trackLeft - 20, railY - 3, maxTrackPx + 40, 2);
+
+      // Vẽ mốc M và N + đường gióng
+      [
+        { x: mX, label: 'M' },
+        { x: nX, label: 'N' },
+      ].forEach(pt => {
+        ctx.save();
+        ctx.strokeStyle = '#64748b';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(pt.x, railY - 12);
+        ctx.lineTo(pt.x, railY + 46);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(pt.x, railY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.font = 'italic 700 18px "Times New Roman", serif';
+        ctx.fillStyle = '#1e3a8a';
+        ctx.textAlign = 'center';
+        ctx.fillText(pt.label, pt.x, railY + 62);
+      });
+
+      // Mũi tên vectơ độ dịch chuyển MN bên dưới ray
+      const mnY = railY + 34;
+      drawCanvasArrow(ctx, mX + 4, mnY, nX - 4, mnY, '#2563eb', 3.5, 13);
+      drawVectorLabel(ctx, 'MN', (mX + nX) / 2 - 28, mnY - 14, '#1d4ed8', 15);
+      ctx.font = '700 13px "Inter", sans-serif';
+      ctx.fillStyle = '#1e40af';
+      ctx.textAlign = 'left';
+      ctx.fillText(`(d = ${s1State.distance} m)`, (mX + nX) / 2 - 4, mnY - 14);
+
+      // Vị trí xe goòng hiện tại
+      const fracPos = s1State.distance > 0 ? s1State.pos / s1State.distance : 0;
+      const cartX = mX + (nX - mX) * fracPos;
+      const cartW = 86;
+      const cartH = 44;
+      const wheelR = 11;
+      const cartBottomY = railY - wheelR * 2 + 2;
+
+      // Vẽ vệt gió chuyển động nếu đang chạy
+      if (s1State.running || s1State.pos > 0) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(37, 99, 235, 0.25)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+          const ly = cartBottomY - 10 - i * 11;
+          ctx.beginPath();
+          ctx.moveTo(cartX - cartW / 2 - 12 - i * 8, ly);
+          ctx.lineTo(cartX - cartW / 2 - 34 - i * 10, ly);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // Thân xe goòng
+      ctx.save();
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.roundRect(cartX - cartW / 2, cartBottomY - cartH, cartW, cartH, [10, 10, 4, 4]);
+      ctx.fill();
+
+      // Khoang xe màu xanh dương
+      ctx.fillStyle = '#3b82f6';
+      ctx.beginPath();
+      ctx.roundRect(cartX - cartW / 2 + 5, cartBottomY - cartH + 5, cartW - 10, cartH - 14, 6);
+      ctx.fill();
+
+      // Nhãn vận tốc trên thân xe
+      ctx.font = '700 12px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText(`v=${fmtVN(s1State.vel, 1)}`, cartX, cartBottomY - cartH / 2 - 1);
+
+      // Hai bánh xe xoay
+      [cartX - 24, cartX + 24].forEach(wx => {
+        const wy = railY - wheelR;
+        ctx.beginPath();
+        ctx.arc(wx, wy, wheelR, 0, Math.PI * 2);
+        ctx.fillStyle = '#334155';
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Nan hoa bánh xe để thấy rõ tốc độ quay
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(wx - Math.cos(s1State.wheelAngle) * (wheelR - 3), wy - Math.sin(s1State.wheelAngle) * (wheelR - 3));
+        ctx.lineTo(wx + Math.cos(s1State.wheelAngle) * (wheelR - 3), wy + Math.sin(s1State.wheelAngle) * (wheelR - 3));
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      // Điểm đặt lực trên xe
+      const hookX = cartX;
+      const hookY = cartBottomY - cartH;
+
+      // Vẽ tia tham chiếu hướng chuyển động MN tại điểm đặt lực (nét đứt xanh)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.55)';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(hookX, hookY);
+      ctx.lineTo(hookX + 95, hookY);
+      ctx.stroke();
+      ctx.restore();
+      ctx.font = '600 11px "Inter", sans-serif';
+      ctx.fillStyle = '#2563eb';
+      ctx.textAlign = 'left';
+      ctx.fillText('Hướng MN', hookX + 54, hookY + 14);
+
+      // Chiều dài mũi tên lực F tỷ lệ theo force (10..100 N -> 55..135 px)
+      const fLen = 55 + ((s1State.force - 10) / 90) * 80;
+      const fx = hookX + fLen * cosA;
+      const fy = hookY - fLen * sinA;
+
+      // Vẽ thành phần song song & vuông góc nét đứt
+      const fColor = s1State.angleDeg < 90 ? '#059669' : s1State.angleDeg === 90 ? '#d97706' : '#e11d48';
+
+      // Thành phần vuông góc F_perp và phản lực ray triệt tiêu
+      if (sinA > 0.05) {
+        drawCanvasArrow(ctx, hookX, hookY, hookX, fy, '#8b5cf6', 2.2, 9, true);
+        // Đường gióng từ đầu F sang trục vuông góc và trục ngang
+        ctx.save();
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy);
+        ctx.lineTo(hookX, fy);
+        ctx.moveTo(fx, fy);
+        ctx.lineTo(fx, hookY);
+        ctx.stroke();
+        ctx.restore();
+
+        // Mũi tên phản lực của ray hướng xuống triệt tiêu F_perp (vẽ gọn gàng dưới bánh/tâm)
+        ctx.font = '700 11px "Inter", sans-serif';
+        ctx.fillStyle = '#7c3aed';
+        ctx.textAlign = cosA >= 0 ? 'right' : 'left';
+        const lblX = cosA >= 0 ? hookX - 8 : hookX + 8;
+        ctx.fillText('F⊥ (bị ray triệt tiêu)', lblX, (hookY + fy) / 2);
+      }
+
+      // Thành phần song song F_parallel
+      if (Math.abs(cosA) > 0.05) {
+        drawCanvasArrow(ctx, hookX, hookY, fx, hookY, fColor, 2.8, 10, true);
+      }
+
+      // Vẽ cung góc α = (F, MN)
+      if (s1State.angleDeg > 0) {
+        const arcR = 32;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(hookX, hookY);
+        ctx.arc(hookX, hookY, arcR, 0, -rad, true);
+        ctx.closePath();
+        ctx.fillStyle = s1State.angleDeg < 90 ? 'rgba(16, 185, 129, 0.16)' : s1State.angleDeg === 90 ? 'rgba(245, 158, 11, 0.25)' : 'rgba(225, 29, 72, 0.16)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(hookX, hookY, arcR, 0, -rad, true);
+        ctx.strokeStyle = fColor;
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // Ký hiệu góc vuông nếu α = 90°
+        if (s1State.angleDeg === 90) {
+          ctx.strokeStyle = '#d97706';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(hookX, hookY - 14, 14, 14);
+        }
+
+        const midA = rad / 2;
+        const txtR = arcR + 18;
+        ctx.font = '700 14px "Inter", sans-serif';
+        ctx.fillStyle = fColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`α=${s1State.angleDeg}°`, hookX + Math.cos(midA) * txtR, hookY - Math.sin(midA) * txtR);
+        ctx.restore();
+      }
+
+      // Vẽ vectơ lực chính F
+      drawCanvasArrow(ctx, hookX, hookY, fx, fy, fColor, 4.5, 14, false);
+      // Nhãn vectơ F
+      const lblOffX = cosA >= 0 ? 18 : -18;
+      const lblOffY = sinA > 0.2 ? -14 : -18;
+      drawVectorLabel(ctx, 'F', fx + lblOffX, fy + lblOffY, fColor, 18);
+
+      // Chấm điểm đặt lực
+      ctx.beginPath();
+      ctx.arc(hookX, hookY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+    }
+
+    function resizeAndDrawS1() {
+      updateS1UI();
+      drawS1();
+    }
+
+    function stopS1Anim() {
+      if (s1State.animId) {
+        cancelAnimationFrame(s1State.animId);
+        s1State.animId = null;
+      }
+      s1State.running = false;
+      s1State.lastTime = null;
+      const btn = document.getElementById('s1-run-btn');
+      btn.innerHTML = '<span>▶</span> Chạy thử nghiệm';
+    }
+
+    function resetS1Simulation() {
+      stopS1Anim();
+      s1State.pos = 0;
+      s1State.vel = s1State.v0;
+      s1State.wheelAngle = 0;
+      s1State.finished = false;
+      updateS1UI();
+      drawS1();
+    }
+
+    function runS1Simulation() {
+      if (s1State.running) return;
+      s1State.pos = 0;
+      s1State.vel = s1State.v0;
+      s1State.wheelAngle = 0;
+      s1State.finished = false;
+      s1State.running = true;
+      s1State.lastTime = null;
+
+      const btn = document.getElementById('s1-run-btn');
+      btn.innerHTML = '<span>⏳</span> Xe đang chạy...';
+
+      const { acc } = getS1Physics();
+      const timeScale = 0.42; // Làm chậm nhẹ thời gian vật lý để học sinh dễ quan sát gia tốc
+
+      function step(ts) {
+        if (!s1State.running) return;
+        if (!s1State.lastTime) s1State.lastTime = ts;
+        const dtReal = Math.min(0.05, (ts - s1State.lastTime) / 1000);
+        s1State.lastTime = ts;
+        const dt = dtReal * timeScale;
+
+        const nextVel = s1State.vel + acc * dt;
+        const avgVel = 0.5 * (s1State.vel + nextVel);
+        s1State.pos += avgVel * dt;
+        s1State.vel = nextVel;
+        s1State.wheelAngle += avgVel * dt * 2.2;
+
+        if (s1State.pos >= s1State.distance) {
+          s1State.pos = s1State.distance;
+          s1State.vel = getS1Physics().vFinal;
+          s1State.finished = true;
+          stopS1Anim();
+          playSnapSound();
+        }
+
+        updateS1UI();
+        drawS1();
+        if (s1State.running) {
+          s1State.animId = requestAnimationFrame(step);
+        }
+      }
+
+      s1State.animId = requestAnimationFrame(step);
+    }
+
+    function setS1Angle(deg) {
+      s1State.angleDeg = deg;
+      resetS1Simulation();
+    }
+
+    document.getElementById('s1-angle-slider').addEventListener('input', (e) => {
+      s1State.angleDeg = parseInt(e.target.value, 10);
+      resetS1Simulation();
+    });
+    document.getElementById('s1-force-slider').addEventListener('input', (e) => {
+      s1State.force = parseInt(e.target.value, 10);
+      resetS1Simulation();
+    });
+    document.getElementById('s1-dist-slider').addEventListener('input', (e) => {
+      s1State.distance = parseInt(e.target.value, 10);
+      resetS1Simulation();
+    });
+
+    /* =====================================================
+       TRẠM 2 – TAB 2A: GHÉP GỐC XÁC ĐỊNH GÓC GIỮA HAI VECTƠ
+       ===================================================== */
+    const canvas2A = document.getElementById('canvas-2a');
+    const state2A = {
+      scenario: 1,
+      snapped: false,
+      dragging: false,
+      dragOffset: { x: 0, y: 0 },
+      // Tọa độ chuẩn hóa theo kích thước canvas (tính khi vẽ/reset)
+      fixedOrigin: { x: 0, y: 0 },
+      fixedVec: { dx: 0, dy: 0 },
+      moveOrigin: { x: 0, y: 0 },
+      moveStart: { x: 0, y: 0 },
+      moveVec: { dx: 0, dy: 0 },
+      animId: null,
+    };
+
+    const scenarios2A = {
+      1: {
+        angleDeg: 60,
+        fixedLabel: 'u',
+        moveLabel: 'v',
+        descSnapped: 'Khi tịnh tiến vectơ <span class="vec">v</span> về trùng điểm đầu với <span class="vec">u</span>, góc tạo thành giữa hai vectơ là <strong>(<span class="vec">u</span>, <span class="vec">v</span>) = 60°</strong>.',
+      },
+      2: {
+        angleDeg: 120,
+        fixedLabel: 'BC',
+        moveLabel: 'AB',
+        descSnapped: '<strong>Cẩn thận bẫy góc 60°!</strong> Hai vectơ <span class="vec">AB</span> và <span class="vec">BC</span> ban đầu nối đuôi nhau tại <span class="math-var">B</span>. Khi tịnh tiến <span class="vec">AB</span> thành <span class="vec">BD</span> để chung gốc <span class="math-var">B</span>, ta thấy ngay góc ngoài <strong>(<span class="vec">AB</span>, <span class="vec">BC</span>) = 180° − 60° = 120°</strong>!',
+      },
+      3: {
+        angleDeg: 150,
+        fixedLabel: 'BC',
+        moveLabel: 'AB',
+        descSnapped: 'Tương tự Ví dụ 1 (SGK trang 66): Tam giác <span class="math-var">ABC</span> vuông tại <span class="math-var">A</span> có góc <span class="math-var">B</span> = 30°. Khi tịnh tiến <span class="vec">AB</span> thành <span class="vec">BD</span> chung gốc <span class="math-var">B</span> với <span class="vec">BC</span>, ta thu được <strong>(<span class="vec">AB</span>, <span class="vec">BC</span>) = 180° − 30° = 150°</strong>!',
+      },
+    };
+
+    function compute2AGeometry(w, h, preservePos = false) {
+      const cx = w / 2;
+      const cy = h / 2;
+      const unit = Math.min(w * 0.28, h * 0.42, 165);
+
+      let fOrig, fVec, mStart, mVec;
+      if (state2A.scenario === 1) {
+        fOrig = { x: cx - unit * 0.75, y: cy + unit * 0.35 };
+        fVec = { dx: unit * 1.15, dy: 0 };
+        mStart = { x: cx + unit * 0.25, y: cy - unit * 0.05 };
+        mVec = { dx: unit * Math.cos(Math.PI / 3), dy: -unit * Math.sin(Math.PI / 3) };
+      } else if (state2A.scenario === 2) {
+        // Tam giác đều ABC: A (dưới trái), B (dưới giữa), C (trên)
+        const side = unit * 1.1;
+        const bx = cx;
+        const by = cy + side * 0.38;
+        const ax = bx - side;
+        const ay = by;
+        const cxPt = bx - side * Math.cos(Math.PI / 3);
+        const cyPt = by - side * Math.sin(Math.PI / 3);
+        fOrig = { x: bx, y: by }; // B
+        fVec = { dx: cxPt - bx, dy: cyPt - by }; // BC
+        mStart = { x: ax, y: ay }; // A
+        mVec = { dx: bx - ax, dy: by - ay }; // AB
+      } else {
+        // Tam giác vuông ABC tại A, góc B = 30°: A (dưới trái), B (dưới giữa), C (trên A)
+        const base = unit * 1.18;
+        const height = base * Math.tan(Math.PI / 6); // base / sqrt(3)
+        const bx = cx + 10;
+        const by = cy + height * 0.55;
+        const ax = bx - base;
+        const ay = by;
+        const cxPt = ax;
+        const cyPt = ay - height;
+        fOrig = { x: bx, y: by }; // B
+        fVec = { dx: cxPt - bx, dy: cyPt - by }; // BC
+        mStart = { x: ax, y: ay }; // A
+        mVec = { dx: bx - ax, dy: by - ay }; // AB
+      }
+
+      state2A.fixedOrigin = fOrig;
+      state2A.fixedVec = fVec;
+      state2A.moveStart = mStart;
+      state2A.moveVec = mVec;
+
+      if (!preservePos) {
+        state2A.moveOrigin = state2A.snapped ? { ...fOrig } : { ...mStart };
+      } else if (state2A.snapped) {
+        state2A.moveOrigin = { ...fOrig };
+      }
+    }
+
+    function select2AScenario(id) {
+      if (state2A.animId) cancelAnimationFrame(state2A.animId);
+      state2A.scenario = id;
+      state2A.snapped = false;
+      update2ACaseButtons();
+      update2AStatusUI();
+      resizeAndDraw2A(false);
+    }
+
+    function reset2AScenario() {
+      if (state2A.animId) cancelAnimationFrame(state2A.animId);
+      state2A.snapped = false;
+      update2AStatusUI();
+      resizeAndDraw2A(false);
+    }
+
+    function update2ACaseButtons() {
+      for (let i = 1; i <= 3; i++) {
+        const b = document.getElementById(`s2a-btn-${i}`);
+        if (i === state2A.scenario) {
+          b.className = 's2a-case-btn w-full text-left p-3.5 rounded-2xl border-2 border-indigo-600 bg-indigo-50/80 transition shadow-sm';
+        } else {
+          b.className = 's2a-case-btn w-full text-left p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-indigo-300 transition';
+        }
+      }
+    }
+
+    function update2AStatusUI() {
+      const info = scenarios2A[state2A.scenario];
+      const badge = document.getElementById('t2a-badge');
+      const fb = document.getElementById('t2a-feedback');
+      const fbDesc = document.getElementById('t2a-fb-desc');
+
+      if (state2A.snapped) {
+        badge.className = 'text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-600 text-white';
+        badge.textContent = `✓ Đã chung gốc • Góc = ${info.angleDeg}°`;
+        fb.classList.remove('hidden');
+        fbDesc.innerHTML = info.descSnapped;
+      } else {
+        badge.className = 'text-xs font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-800';
+        badge.textContent = 'Chưa chung gốc';
+        fb.classList.add('hidden');
+      }
+    }
+
+    function draw2A() {
+      const { ctx, w, h } = setupHiDPICanvas(canvas2A);
+      compute2AGeometry(w, h, true);
+      ctx.clearRect(0, 0, w, h);
+
+      // Lưới ô vuông nhẹ
+      ctx.save();
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 28) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 28) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+      ctx.restore();
+
+      const fO = state2A.fixedOrigin;
+      const fV = state2A.fixedVec;
+      const mS = state2A.moveStart;
+      const mO = state2A.moveOrigin;
+      const mV = state2A.moveVec;
+      const info = scenarios2A[state2A.scenario];
+
+      // Vẽ hình tam giác gốc nếu là tình huống 2 hoặc 3
+      if (state2A.scenario === 2 || state2A.scenario === 3) {
+        const ax = mS.x, ay = mS.y;
+        const bx = fO.x, by = fO.y;
+        const cxPt = fO.x + fV.dx, cyPt = fO.y + fV.dy;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(226, 232, 240, 0.35)';
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.lineTo(cxPt, cyPt);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Ký hiệu góc vuông tại A cho tình huống 3
+        if (state2A.scenario === 3) {
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 1.8;
+          ctx.strokeRect(ax, ay - 14, 14, 14);
+        }
+
+        // Vẽ cung góc trong tại B (60° hoặc 30°)
+        const innerDeg = state2A.scenario === 2 ? 60 : 30;
+        const angBC = Math.atan2(cyPt - by, cxPt - bx);
+        ctx.beginPath();
+        ctx.arc(bx, by, 28, Math.PI, angBC, false);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        ctx.font = '700 13px "Inter", sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.textAlign = 'center';
+        const midIn = (Math.PI + angBC) / 2;
+        ctx.fillText(`${innerDeg}°`, bx + Math.cos(midIn) * 44, by + Math.sin(midIn) * 44);
+
+        // Bóng mờ vectơ AB ban đầu khi đang kéo đi
+        if (Math.hypot(mO.x - mS.x, mO.y - mS.y) > 4) {
+          drawCanvasArrow(ctx, ax, ay, bx, by, 'rgba(234, 88, 12, 0.25)', 3, 11, true);
+        }
+
+        // Nhãn đỉnh A, B, C
+        ctx.font = 'italic 700 19px "Times New Roman", serif';
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.fillText('A', ax - 16, ay + 12);
+        ctx.fillText('B', bx, by + 24);
+        ctx.fillText('C', cxPt, cyPt - 14);
+        ctx.restore();
+      }
+
+      // Vòng tròn gợi ý đích đến tại điểm đầu vectơ cố định nếu chưa ghép
+      if (!state2A.snapped) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(fO.x, fO.y, 18, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(79, 70, 229, 0.45)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Nếu đã ghép gốc: vẽ cung góc sáng rực rỡ
+      if (state2A.snapped) {
+        const a1 = Math.atan2(fV.dy, fV.dx);
+        const a2 = Math.atan2(mV.dy, mV.dx);
+        let diff = a2 - a1;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+        const ccw = diff < 0;
+        const arcR = 44;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(fO.x, fO.y);
+        ctx.arc(fO.x, fO.y, arcR, a1, a2, ccw);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.24)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(fO.x, fO.y, arcR, a1, a2, ccw);
+        ctx.strokeStyle = '#059669';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        const mid = a1 + diff / 2;
+        ctx.font = '800 18px "Inter", sans-serif';
+        ctx.fillStyle = '#047857';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${info.angleDeg}°`, fO.x + Math.cos(mid) * (arcR + 24), fO.y + Math.sin(mid) * (arcR + 24));
+        ctx.restore();
+      }
+
+      // Vẽ vectơ cố định (màu xanh dương)
+      drawCanvasArrow(ctx, fO.x, fO.y, fO.x + fV.dx, fO.y + fV.dy, '#2563eb', 4.5, 14);
+      const fMidX = fO.x + fV.dx * 0.55;
+      const fMidY = fO.y + fV.dy * 0.55;
+      drawVectorLabel(ctx, info.fixedLabel, fMidX + (state2A.scenario === 1 ? 0 : -22), fMidY + (state2A.scenario === 1 ? 24 : -14), '#1d4ed8', 17);
+
+      // Vẽ vectơ có thể kéo (màu cam nổi bật)
+      const mColor = state2A.snapped ? '#059669' : '#ea580c';
+      drawCanvasArrow(ctx, mO.x, mO.y, mO.x + mV.dx, mO.y + mV.dy, mColor, 4.5, 14);
+
+      // Tay cầm kéo ở điểm đầu vectơ kéo
+      ctx.beginPath();
+      ctx.arc(mO.x, mO.y, 9, 0, Math.PI * 2);
+      ctx.fillStyle = mColor;
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Nhãn vectơ kéo
+      const mMidX = mO.x + mV.dx * 0.52;
+      const mMidY = mO.y + mV.dy * 0.52;
+      const moveLbl = state2A.snapped && state2A.scenario !== 1 ? 'BD (=AB)' : info.moveLabel;
+      if (state2A.snapped && state2A.scenario !== 1) {
+        ctx.font = 'italic 700 18px "Times New Roman", serif';
+        ctx.fillStyle = '#047857';
+        ctx.textAlign = 'center';
+        ctx.fillText('D', mO.x + mV.dx + 16, mO.y + mV.dy + 6);
+        drawVectorLabel(ctx, 'BD', mMidX, mMidY + 24, '#047857', 16);
+      } else {
+        drawVectorLabel(ctx, info.moveLabel, mMidX + (state2A.scenario === 1 ? -18 : 0), mMidY + (state2A.scenario === 1 ? -14 : 24), mColor, 17);
+      }
+    }
+
+    function resizeAndDraw2A(preserve = true) {
+      const rect = canvas2A.parentElement.getBoundingClientRect();
+      if (rect.width === 0) return;
+      compute2AGeometry(rect.width, rect.height, preserve);
+      draw2A();
+    }
+
+    function animateSnap2A() {
+      if (state2A.animId) cancelAnimationFrame(state2A.animId);
+      const sx = state2A.moveOrigin.x;
+      const sy = state2A.moveOrigin.y;
+      const tx = state2A.fixedOrigin.x;
+      const ty = state2A.fixedOrigin.y;
+      const startTime = performance.now();
+      const dur = 500;
+
+      function tick(now) {
+        const t = Math.min(1, (now - startTime) / dur);
+        const ease = 1 - Math.pow(1 - t, 3);
+        state2A.moveOrigin.x = sx + (tx - sx) * ease;
+        state2A.moveOrigin.y = sy + (ty - sy) * ease;
+        if (t >= 1) {
+          state2A.snapped = true;
+          state2A.moveOrigin = { x: tx, y: ty };
+          update2AStatusUI();
+          playSnapSound();
+        }
+        draw2A();
+        if (t < 1) state2A.animId = requestAnimationFrame(tick);
+      }
+      state2A.animId = requestAnimationFrame(tick);
+    }
+
+    // Tương tác kéo chuột & chạm trên Canvas 2A
+    function getPointerPos(canvas, evt) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function distPointToSegment(px, py, x1, y1, x2, y2) {
+      const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+      if (l2 === 0) return Math.hypot(px - x1, py - y1);
+      let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
+    }
+
+    function startDrag2A(evt) {
+      const p = getPointerPos(canvas2A, evt);
+      const mO = state2A.moveOrigin;
+      const mV = state2A.moveVec;
+      const d = distPointToSegment(p.x, p.y, mO.x, mO.y, mO.x + mV.dx, mO.y + mV.dy);
+      if (d <= 28) {
+        if (state2A.animId) cancelAnimationFrame(state2A.animId);
+        state2A.dragging = true;
+        state2A.snapped = false;
+        state2A.dragOffset = { x: p.x - mO.x, y: p.y - mO.y };
+        update2AStatusUI();
+        canvas2A.style.cursor = 'grabbing';
+        evt.preventDefault();
+      }
+    }
+
+    function moveDrag2A(evt) {
+      const p = getPointerPos(canvas2A, evt);
+      if (!state2A.dragging) {
+        const mO = state2A.moveOrigin;
+        const mV = state2A.moveVec;
+        const d = distPointToSegment(p.x, p.y, mO.x, mO.y, mO.x + mV.dx, mO.y + mV.dy);
+        canvas2A.style.cursor = d <= 28 ? 'grab' : 'default';
+        return;
+      }
+      evt.preventDefault();
+      let nx = p.x - state2A.dragOffset.x;
+      let ny = p.y - state2A.dragOffset.y;
+
+      const distToTarget = Math.hypot(nx - state2A.fixedOrigin.x, ny - state2A.fixedOrigin.y);
+      if (distToTarget < 26) {
+        nx = state2A.fixedOrigin.x;
+        ny = state2A.fixedOrigin.y;
+        if (!state2A.snapped) {
+          state2A.snapped = true;
+          playSnapSound();
+          update2AStatusUI();
+        }
+      } else if (state2A.snapped) {
+        state2A.snapped = false;
+        update2AStatusUI();
+      }
+
+      state2A.moveOrigin = { x: nx, y: ny };
+      draw2A();
+    }
+
+    function endDrag2A() {
+      if (state2A.dragging) {
+        state2A.dragging = false;
+        canvas2A.style.cursor = 'grab';
+      }
+    }
+
+    canvas2A.addEventListener('mousedown', startDrag2A);
+    window.addEventListener('mousemove', moveDrag2A);
+    window.addEventListener('mouseup', endDrag2A);
+    canvas2A.addEventListener('touchstart', startDrag2A, { passive: false });
+    window.addEventListener('touchmove', moveDrag2A, { passive: false });
+    window.addEventListener('touchend', endDrag2A);
+
+    /* =====================================================
+       TRẠM 2 – TAB 2B: KHÁM PHÁ TÍCH VÔ HƯỚNG
+       ===================================================== */
+    const canvas2B = document.getElementById('canvas-2b');
+    const state2B = {
+      lenA: 3,
+      lenB: 4,
+      angleDeg: 60,
+      showFormula: false, // MẶC ĐỊNH ẨN
+      draggingTarget: null, // 'a' hoặc 'b'
+      trials: [],
+    };
+
+    // Bảng giá trị đúng cho các góc đặc biệt
+    const specialCosMap = {
+      0:   { exact: '1', dec: '1', factor: 1, radText: '' },
+      30:  { exact: '<span class="frac"><span class="num">√3</span><span class="den">2</span></span>', dec: '0,87', factor: 0.5, radText: '√3' },
+      45:  { exact: '<span class="frac"><span class="num">√2</span><span class="den">2</span></span>', dec: '0,71', factor: 0.5, radText: '√2' },
+      60:  { exact: '<span class="frac"><span class="num">1</span><span class="den">2</span></span>', dec: '0,5', factor: 0.5, radText: '' },
+      90:  { exact: '0', dec: '0', factor: 0, radText: '' },
+      120: { exact: '−<span class="frac"><span class="num">1</span><span class="den">2</span></span>', dec: '−0,5', factor: -0.5, radText: '' },
+      135: { exact: '−<span class="frac"><span class="num">√2</span><span class="den">2</span></span>', dec: '−0,71', factor: -0.5, radText: '√2' },
+      150: { exact: '−<span class="frac"><span class="num">√3</span><span class="den">2</span></span>', dec: '−0,87', factor: -0.5, radText: '√3' },
+      180: { exact: '−1', dec: '−1', factor: -1, radText: '' },
+    };
+
+    function formatExactDot(lenA, lenB, deg) {
+      const prod = lenA * lenB;
+      const sp = specialCosMap[deg];
+      if (!sp) return '';
+      if (deg === 0) return '';
+      if (deg === 90) return '';
+      if (deg === 180) return '';
+      if (deg === 60 || deg === 120) return '';
+      // 30, 45, 135, 150 -> có căn
+      const sign = deg > 90 ? '−' : '';
+      if (prod % 2 === 0) {
+        return `(= ${sign}${prod / 2}${sp.radText})`;
+      } else {
+        return `(= ${sign}<span class="frac"><span class="num">${prod}${sp.radText}</span><span class="den">2</span></span>)`;
+      }
+    }
+
+    function update2BHUD() {
+      const { lenA, lenB, angleDeg, showFormula } = state2B;
+      const cosVal = angleDeg === 90 ? 0 : Math.cos((angleDeg * Math.PI) / 180);
+      const dotVal = lenA * lenB * cosVal;
+
+      document.getElementById('hud-len-a').textContent = lenA;
+      document.getElementById('hud-len-b').textContent = lenB;
+      document.getElementById('hud-angle').textContent = `${angleDeg}°`;
+      document.getElementById('s2b-a-txt').textContent = lenA;
+      document.getElementById('s2b-b-txt').textContent = lenB;
+      document.getElementById('s2b-ang-txt').textContent = `${angleDeg}°`;
+      document.getElementById('s2b-len-a').value = lenA;
+      document.getElementById('s2b-len-b').value = lenB;
+      document.getElementById('s2b-angle').value = angleDeg;
+
+      const sp = specialCosMap[angleDeg];
+      if (sp) {
+        document.getElementById('hud-cos').innerHTML =
+          sp.exact === sp.dec ? sp.exact : `${sp.exact} <span class="text-sm text-slate-500 ml-1">≈ ${sp.dec}</span>`;
+      } else {
+        document.getElementById('hud-cos').textContent = fmtVN(cosVal, 2);
+      }
+
+      const dotDisplay = Math.abs(dotVal - Math.round(dotVal)) < 1e-6 ? Math.round(dotVal).toString() : fmtVN(dotVal, 2);
+      document.getElementById('hud-dot-val').textContent = dotDisplay.replace('-', '−');
+      document.getElementById('hud-dot-exact').innerHTML = formatExactDot(lenA, lenB, angleDeg);
+
+      // Ẩn/Hiện công thức
+      document.getElementById('hud-formula-hidden').classList.toggle('hidden', showFormula);
+      document.getElementById('hud-formula-shown').classList.toggle('hidden', !showFormula);
+      document.getElementById('hud-formula-sub').textContent = `= ${lenA} · ${lenB} · cos(${angleDeg}°) = ${dotDisplay.replace('-', '−')}`;
+
+      // Đèn tín hiệu đổi màu thông minh
+      const card = document.getElementById('hud-dot-card');
+      const statusBadge = document.getElementById('hud-dot-status');
+      const valEl = document.getElementById('hud-dot-val');
+
+      card.classList.remove('perp-glow');
+      if (angleDeg < 90) {
+        card.className = 'rounded-2xl p-4 border-2 bg-emerald-50 border-emerald-400 transition-all';
+        statusBadge.className = 'text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-600 text-white';
+        statusBadge.textContent = '+ Dương (Góc nhọn)';
+        valEl.className = 'font-mono text-3xl sm:text-4xl font-extrabold text-emerald-700';
+      } else if (angleDeg === 90) {
+        card.className = 'rounded-2xl p-4 border-2 bg-amber-50 border-amber-400 perp-glow transition-all';
+        statusBadge.className = 'text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-500 text-white';
+        statusBadge.innerHTML = '= 0 • <span class="vec text-white">a</span> ⊥ <span class="vec text-white">b</span> (Vuông góc)';
+        valEl.className = 'font-mono text-3xl sm:text-4xl font-extrabold text-amber-700';
+      } else {
+        card.className = 'rounded-2xl p-4 border-2 bg-rose-50 border-rose-400 transition-all';
+        statusBadge.className = 'text-xs font-extrabold px-2.5 py-1 rounded-full bg-rose-600 text-white';
+        statusBadge.textContent = '− Âm (Góc tù)';
+        valEl.className = 'font-mono text-3xl sm:text-4xl font-extrabold text-rose-700';
+      }
+
+      // Highlight nút góc đặc biệt
+      document.querySelectorAll('.s2b-preset').forEach(btn => {
+        const val = parseInt(btn.textContent, 10);
+        if (val === angleDeg) {
+          btn.classList.add('ring-2', 'ring-indigo-600', 'bg-indigo-600', 'text-white', 'border-indigo-600');
+          btn.classList.remove('bg-white', 'bg-amber-50', 'text-amber-900');
+        } else {
+          btn.classList.remove('ring-2', 'ring-indigo-600', 'bg-indigo-600', 'text-white', 'border-indigo-600');
+          if (val === 90) btn.classList.add('bg-amber-50', 'text-amber-900');
+          else btn.classList.add('bg-white');
+        }
+      });
+    }
+
+    function get2BOriginAndScale(w, h) {
+      const scale = Math.min((w - 80) / 12.5, (h - 90) / 6.8, 42);
+      const ox = w * 0.5;
+      const oy = h * 0.80;
+      return { ox, oy, scale };
+    }
+
+    function draw2B() {
+      const { ctx, w, h } = setupHiDPICanvas(canvas2B);
+      const { ox, oy, scale } = get2BOriginAndScale(w, h);
+      const { lenA, lenB, angleDeg } = state2B;
+      const rad = (angleDeg * Math.PI) / 180;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Lưới chia đơn vị quanh gốc O
+      ctx.save();
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 1;
+      for (let i = -7; i <= 7; i++) {
+        const gx = ox + i * scale;
+        ctx.beginPath(); ctx.moveTo(gx, 10); ctx.lineTo(gx, h - 10); ctx.stroke();
+      }
+      for (let j = -1; j <= 7; j++) {
+        const gy = oy - j * scale;
+        ctx.beginPath(); ctx.moveTo(10, gy); ctx.lineTo(w - 10, gy); ctx.stroke();
+      }
+      ctx.restore();
+
+      // Vòng tròn nửa trên minh họa giới hạn 0°..180°
+      ctx.save();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(ox, oy, lenB * scale, 0, Math.PI, true);
+      ctx.stroke();
+
+      // Đường ngang 0° – 180°
+      ctx.beginPath();
+      ctx.moveTo(ox - 6.3 * scale, oy);
+      ctx.lineTo(ox + 6.3 * scale, oy);
+      ctx.stroke();
+      ctx.restore();
+
+      // Điểm cuối vectơ a và b
+      const ax = ox + lenA * scale;
+      const ay = oy;
+      const bx = ox + lenB * scale * Math.cos(rad);
+      const by = oy - lenB * scale * Math.sin(rad);
+
+      // Hình chiếu vuông góc của đầu b lên trục a (giúp HS cảm nhận trực quan)
+      if (angleDeg > 0 && angleDeg < 180) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx, oy);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Cung góc α ∈ [0°; 180°]
+      const arcColor = angleDeg < 90 ? '#059669' : angleDeg === 90 ? '#d97706' : '#e11d48';
+      const arcFill = angleDeg < 90 ? 'rgba(16, 185, 129, 0.16)' : angleDeg === 90 ? 'rgba(245, 158, 11, 0.25)' : 'rgba(225, 29, 72, 0.16)';
+
+      if (angleDeg > 0) {
+        const arcR = Math.min(46, lenA * scale * 0.65, lenB * scale * 0.65);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(ox, oy);
+        ctx.arc(ox, oy, arcR, 0, -rad, true);
+        ctx.closePath();
+        ctx.fillStyle = arcFill;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(ox, oy, arcR, 0, -rad, true);
+        ctx.strokeStyle = arcColor;
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+
+        if (angleDeg === 90) {
+          ctx.strokeStyle = '#d97706';
+          ctx.lineWidth = 2.2;
+          ctx.strokeRect(ox, oy - 16, 16, 16);
+        }
+
+        const mid = rad / 2;
+        ctx.font = '800 15px "Inter", sans-serif';
+        ctx.fillStyle = arcColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${angleDeg}°`, ox + Math.cos(mid) * (arcR + 22), oy - Math.sin(mid) * (arcR + 22));
+        ctx.restore();
+      }
+
+      // Vẽ vectơ a (xanh dương)
+      drawCanvasArrow(ctx, ox, oy, ax, ay, '#2563eb', 4.5, 14);
+      drawVectorLabel(ctx, 'a', (ox + ax) / 2, oy + 24, '#1d4ed8', 18);
+
+      // Tay cầm tròn nhỏ ở đầu a
+      ctx.beginPath();
+      ctx.arc(ax, ay, 7.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(37, 99, 235, 0.25)';
+      ctx.fill();
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Vẽ vectơ b (tím)
+      drawCanvasArrow(ctx, ox, oy, bx, by, '#7c3aed', 4.5, 14);
+      const bLblX = (ox + bx) / 2 + (angleDeg >= 90 ? -18 : 18);
+      const bLblY = (oy + by) / 2 - 14;
+      drawVectorLabel(ctx, 'b', bLblX, bLblY, '#6d28d9', 18);
+
+      // Tay cầm tròn lớn ở đầu b để học sinh dễ kéo
+      ctx.beginPath();
+      ctx.arc(bx, by, 10, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(124, 58, 237, 0.25)';
+      ctx.fill();
+      ctx.strokeStyle = '#7c3aed';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Gốc O
+      ctx.beginPath();
+      ctx.arc(ox, oy, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.font = 'italic 700 18px "Times New Roman", serif';
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.fillText('O', ox - 14, oy + 22);
+
+      // Ghi chú nhỏ góc dưới
+      ctx.font = '600 12px "Inter", sans-serif';
+      ctx.fillStyle = '#64748b';
+      ctx.textAlign = 'left';
+      ctx.fillText('180°', ox - 6.3 * scale, oy + 18);
+      ctx.textAlign = 'right';
+      ctx.fillText('0°', ox + 6.3 * scale, oy + 18);
+    }
+
+    function resizeAndDraw2B() {
+      update2BHUD();
+      draw2B();
+    }
+
+    function set2BAngle(deg) {
+      state2B.angleDeg = deg;
+      if (deg === 90) playSnapSound();
+      update2BHUD();
+      draw2B();
+    }
+
+    function toggleFormulaVisibility() {
+      state2B.showFormula = document.getElementById('toggle-formula-cb').checked;
+      document.getElementById('toggle-formula-label').textContent = state2B.showFormula ? 'Đang hiện công thức' : 'Hiện công thức';
+      update2BHUD();
+    }
+
+    function record2BTrial() {
+      const toast = document.getElementById('s2b-toast');
+      if (state2B.trials.length >= 6) {
+        toast.textContent = 'Bảng đã đủ 6 lần ghi nhận. Hãy bấm "Xóa bảng" nếu muốn thử thêm!';
+        toast.classList.remove('hidden');
+        return;
+      }
+      toast.classList.add('hidden');
+      const { lenA, lenB, angleDeg } = state2B;
+      const cosVal = angleDeg === 90 ? 0 : Math.cos((angleDeg * Math.PI) / 180);
+      const dotVal = lenA * lenB * cosVal;
+      state2B.trials.push({ lenA, lenB, angleDeg, cosVal, dotVal });
+      playSnapSound();
+      render2BTable();
+    }
+
+    function clear2BTrials() {
+      state2B.trials = [];
+      document.getElementById('s2b-toast').classList.add('hidden');
+      render2BTable();
+    }
+
+    function render2BTable() {
+      document.getElementById('s2b-count').textContent = state2B.trials.length;
+      const tbody = document.getElementById('s2b-table-body');
+      if (state2B.trials.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-6 text-center text-slate-400 italic">
+              Chưa có dữ liệu. Hãy chọn các góc đặc biệt (0°, 60°, 90°, 120°, 180°) và bấm <strong>"Ghi nhận dữ liệu"</strong>!
+            </td>
+          </tr>`;
+        return;
+      }
+      tbody.innerHTML = state2B.trials.map((t, idx) => {
+        const sp = specialCosMap[t.angleDeg];
+        const cosStr = sp ? sp.exact : fmtVN(t.cosVal, 2);
+        const dotStr = (Math.abs(t.dotVal - Math.round(t.dotVal)) < 1e-6 ? Math.round(t.dotVal).toString() : fmtVN(t.dotVal, 2)).replace('-', '−');
+        const note = t.angleDeg < 90
+          ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">+ Dương (nhọn)</span>'
+          : t.angleDeg === 90
+          ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">= 0 (vuông góc)</span>'
+          : '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">− Âm (tù)</span>';
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 font-bold text-slate-500">#${idx + 1}</td>
+            <td class="py-2.5 px-3 font-mono font-bold text-blue-700">${t.lenA}</td>
+            <td class="py-2.5 px-3 font-mono font-bold text-violet-700">${t.lenB}</td>
+            <td class="py-2.5 px-3 font-mono font-bold">${t.angleDeg}°</td>
+            <td class="py-2.5 px-3 font-mono">${cosStr}</td>
+            <td class="py-2.5 px-3 font-mono font-extrabold text-slate-900">${dotStr}</td>
+            <td class="py-2.5 px-3">${note}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    // Sliders Tab 2B
+    document.getElementById('s2b-len-a').addEventListener('input', (e) => {
+      state2B.lenA = parseInt(e.target.value, 10);
+      update2BHUD();
+      draw2B();
+    });
+    document.getElementById('s2b-len-b').addEventListener('input', (e) => {
+      state2B.lenB = parseInt(e.target.value, 10);
+      update2BHUD();
+      draw2B();
+    });
+    document.getElementById('s2b-angle').addEventListener('input', (e) => {
+      state2B.angleDeg = parseInt(e.target.value, 10);
+      update2BHUD();
+      draw2B();
+    });
+
+    // Kéo thả đầu vectơ trên Canvas 2B (giới hạn góc trong [0°, 180°])
+    function startDrag2B(evt) {
+      const rect = canvas2B.getBoundingClientRect();
+      const { ox, oy, scale } = get2BOriginAndScale(rect.width, rect.height);
+      const p = getPointerPos(canvas2B, evt);
+      const rad = (state2B.angleDeg * Math.PI) / 180;
+      const ax = ox + state2B.lenA * scale;
+      const ay = oy;
+      const bx = ox + state2B.lenB * scale * Math.cos(rad);
+      const by = oy - state2B.lenB * scale * Math.sin(rad);
+
+      if (Math.hypot(p.x - bx, p.y - by) <= 28) {
+        state2B.draggingTarget = 'b';
+        canvas2B.style.cursor = 'grabbing';
+        evt.preventDefault();
+      } else if (Math.hypot(p.x - ax, p.y - ay) <= 26) {
+        state2B.draggingTarget = 'a';
+        canvas2B.style.cursor = 'grabbing';
+        evt.preventDefault();
+      }
+    }
+
+    function moveDrag2B(evt) {
+      const rect = canvas2B.getBoundingClientRect();
+      const { ox, oy, scale } = get2BOriginAndScale(rect.width, rect.height);
+      const p = getPointerPos(canvas2B, evt);
+
+      if (!state2B.draggingTarget) {
+        const rad = (state2B.angleDeg * Math.PI) / 180;
+        const ax = ox + state2B.lenA * scale;
+        const bx = ox + state2B.lenB * scale * Math.cos(rad);
+        const by = oy - state2B.lenB * scale * Math.sin(rad);
+        const near = Math.hypot(p.x - bx, p.y - by) <= 28 || Math.hypot(p.x - ax, p.y - oy) <= 26;
+        canvas2B.style.cursor = near ? 'grab' : 'default';
+        return;
+      }
+
+      evt.preventDefault();
+      if (state2B.draggingTarget === 'a') {
+        const rawLen = Math.round((p.x - ox) / scale);
+        state2B.lenA = Math.max(1, Math.min(6, rawLen));
+      } else if (state2B.draggingTarget === 'b') {
+        const dx = p.x - ox;
+        // Khóa ở nửa mặt phẳng phía trên để góc luôn thuộc [0°, 180°]
+        const dy = Math.max(0, oy - p.y);
+        let deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+        deg = Math.max(0, Math.min(180, deg));
+        // Hút nhẹ vào các góc đặc biệt
+        const specials = [0, 30, 45, 60, 90, 120, 135, 150, 180];
+        for (const s of specials) {
+          if (Math.abs(deg - s) <= 2) {
+            deg = s;
+            break;
+          }
+        }
+        const rawLen = Math.round(Math.hypot(dx, dy) / scale);
+        state2B.lenB = Math.max(1, Math.min(6, rawLen));
+        state2B.angleDeg = deg;
+      }
+      update2BHUD();
+      draw2B();
+    }
+
+    function endDrag2B() {
+      if (state2B.draggingTarget) {
+        state2B.draggingTarget = null;
+        canvas2B.style.cursor = 'grab';
+      }
+    }
+
+    canvas2B.addEventListener('mousedown', startDrag2B);
+    window.addEventListener('mousemove', moveDrag2B);
+    window.addEventListener('mouseup', endDrag2B);
+    canvas2B.addEventListener('touchstart', startDrag2B, { passive: false });
+    window.addEventListener('touchmove', moveDrag2B, { passive: false });
+    window.addEventListener('touchend', endDrag2B);
+
+    /* =====================================================
+       TRẠM 3: PHIẾU TỰ KHÁM PHÁ ĐIỆN TỬ & THẺ GHI NHỚ SGK
+       ===================================================== */
+    const s3Q3Selection = { same: null, opp: null };
+
+    function pickS3Q3(part, val) {
+      s3Q3Selection[part] = val;
+      document.querySelectorAll(`.q3-chip[data-q3^="${part}-"]`).forEach(btn => {
+        const isPicked = btn.getAttribute('data-q3') === `${part}-${val}`;
+        if (isPicked) {
+          btn.className = 'q3-chip px-3.5 py-2 rounded-xl border-2 border-teal-600 bg-teal-600 text-white font-bold shadow-sm transition';
+        } else {
+          btn.className = 'q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition';
+        }
+      });
+    }
+
+    function checkS3Quiz() {
+      const q1 = document.querySelector('input[name="s3-q1"]:checked')?.value;
+      const q2 = document.querySelector('input[name="s3-q2"]:checked')?.value;
+      const summary = document.getElementById('s3-summary-msg');
+
+      if (!q1 || !q2 || !s3Q3Selection.same || !s3Q3Selection.opp) {
+        summary.className = 'p-4 rounded-2xl font-bold text-base bg-amber-50 border-2 border-amber-300 text-amber-900';
+        summary.textContent = '⚠ Bạn hãy hoàn thành đủ cả 3 câu hỏi (gồm cả 2 ý ở Câu 3) trước khi kiểm tra nhé!';
+        summary.classList.remove('hidden');
+        return;
+      }
+
+      let score = 0;
+
+      // Câu 1
+      const fb1 = document.getElementById('s3-fb-1');
+      if (q1 === 'B') {
+        score++;
+        fb1.className = 'mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium bg-emerald-50 border border-emerald-300 text-emerald-900';
+        fb1.innerHTML = '✅ <strong>Chính xác!</strong> Vì |<span class="vec">a</span>| &gt; 0 và |<span class="vec">b</span>| &gt; 0, dấu của <span class="vec">a</span> · <span class="vec">b</span> phụ thuộc hoàn toàn vào dấu của cos(<span class="vec">a</span>, <span class="vec">b</span>): góc nhọn thì dương, góc tù thì âm.';
+      } else {
+        fb1.className = 'mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium bg-rose-50 border border-rose-300 text-rose-900';
+        fb1.innerHTML = '❌ <strong>Chưa đúng.</strong> Độ dài vectơ khác 0 luôn dương, nên dấu của <span class="vec">a</span> · <span class="vec">b</span> do <strong>dấu của cos(<span class="vec">a</span>, <span class="vec">b</span>)</strong> quyết định.';
+      }
+      fb1.classList.remove('hidden');
+
+      // Câu 2
+      const fb2 = document.getElementById('s3-fb-2');
+      if (q2 === 'B') {
+        score++;
+        fb2.className = 'mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium bg-emerald-50 border border-emerald-300 text-emerald-900';
+        fb2.innerHTML = '✅ <strong>Xuất sắc!</strong> Bạn không bị dính bẫy vectơ-không! Tích vô hướng là một số thực nên điều kiện vuông góc là <strong><span class="vec">a</span> · <span class="vec">b</span> = 0</strong> (số 0).';
+      } else if (q2 === 'A') {
+        fb2.className = 'mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium bg-rose-50 border border-rose-300 text-rose-900';
+        fb2.innerHTML = '❌ <strong>Ôi, dính bẫy kinh điển rồi!</strong> Tích vô hướng cho ra một <strong>SỐ THỰC</strong>, không phải vectơ. Do đó phải viết <strong><span class="vec">a</span> · <span class="vec">b</span> = 0</strong> (KHÔNG viết <span class="vec vec-zero">0</span>)!';
+      } else {
+        fb2.className = 'mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium bg-rose-50 border border-rose-300 text-rose-900';
+        fb2.innerHTML = '❌ <strong>Chưa đúng.</strong> Khi <span class="vec">a</span> ⊥ <span class="vec">b</span> thì cos 90° = 0, suy ra <strong><span class="vec">a</span> · <span class="vec">b</span> = 0</strong> (số 0).';
+      }
+      fb2.classList.remove('hidden');
+
+      // Câu 3
+      const fb3 = document.getElementById('s3-fb-3');
+      if (s3Q3Selection.same === 'pos' && s3Q3Selection.opp === 'neg') {
+        score++;
+        fb3.className = 'mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium bg-emerald-50 border border-emerald-300 text-emerald-900';
+        fb3.innerHTML = '✅ <strong>Chính xác hoàn toàn!</strong> Cùng hướng: cos 0° = 1 ⇒ <span class="vec">a</span> · <span class="vec">b</span> = |<span class="vec">a</span>| · |<span class="vec">b</span>|. Ngược hướng: cos 180° = −1 ⇒ <span class="vec">a</span> · <span class="vec">b</span> = −|<span class="vec">a</span>| · |<span class="vec">b</span>|.';
+      } else {
+        fb3.className = 'mt-3 p-3.5 rounded-2xl text-sm sm:text-base font-medium bg-rose-50 border border-rose-300 text-rose-900';
+        fb3.innerHTML = '❌ <strong>Kiểm tra lại nhé:</strong> Vì cos 0° = 1 và cos 180° = −1 nên cùng hướng cho kết quả <strong>|<span class="vec">a</span>| · |<span class="vec">b</span>|</strong>, còn ngược hướng cho kết quả <strong>−|<span class="vec">a</span>| · |<span class="vec">b</span>|</strong>.';
+      }
+      fb3.classList.remove('hidden');
+
+      if (score === 3) {
+        summary.className = 'p-4 rounded-2xl font-extrabold text-base bg-emerald-50 border-2 border-emerald-400 text-emerald-900';
+        summary.textContent = '🎉 Tuyệt vời! Bạn đã đúc kết chính xác 3/3 câu! Hãy mở "Thẻ ghi nhớ chuẩn SGK" để chốt lại kiến thức toàn bài.';
+        playCorrectSound();
+        launchConfetti(50);
+      } else {
+        summary.className = 'p-4 rounded-2xl font-bold text-base bg-blue-50 border-2 border-blue-300 text-blue-900';
+        summary.textContent = `Bạn trả lời đúng ${score}/3 câu. Hãy xem kỹ lời giải thích ở trên và đối chiếu với "Thẻ ghi nhớ chuẩn SGK" nhé!`;
+        playWrongSound();
+      }
+      summary.classList.remove('hidden');
+    }
+
+    function resetS3Quiz() {
+      document.querySelectorAll('input[name="s3-q1"], input[name="s3-q2"]').forEach(el => (el.checked = false));
+      s3Q3Selection.same = null;
+      s3Q3Selection.opp = null;
+      document.querySelectorAll('.q3-chip').forEach(btn => {
+        btn.className = 'q3-chip px-3.5 py-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-slate-800 hover:border-teal-500 transition';
+      });
+      ['s3-fb-1', 's3-fb-2', 's3-fb-3', 's3-summary-msg'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+
+    function toggleSGKCard() {
+      const card = document.getElementById('sgk-card');
+      const btn = document.getElementById('toggle-sgk-btn');
+      const isHidden = card.classList.toggle('hidden');
+      if (!isHidden) {
+        btn.innerHTML = '<span>📕</span> Ẩn thẻ ghi nhớ chuẩn SGK';
+        playSnapSound();
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+      } else {
+        btn.innerHTML = '<span>📘</span> Xem thẻ ghi nhớ chuẩn SGK (Kết nối tri thức)';
+      }
+    }
+
+    /* =====================================================
+       TRẠM 4: ĐẤU TRƯỜNG VECTƠ (5 CÂU TRẮC NGHIỆM + SVG)
+       ===================================================== */
+    const arenaQuestions = [
+      {
+        id: 1,
+        category: 'Hình học • Góc nhọn',
+        text: 'Cho tam giác đều <span class="math-var">ABC</span> cạnh <span class="math-var">a</span>. Tính tích vô hướng <span class="vec">AB</span> · <span class="vec">AC</span>.',
+        options: [
+          { key: 'A', html: '<span class="math-var">a</span><sup>2</sup>' },
+          { key: 'B', html: '<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup></span><span class="den">2</span></span>' },
+          { key: 'C', html: '−<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup></span><span class="den">2</span></span>' },
+          { key: 'D', html: '<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup>√3</span><span class="den">2</span></span>' },
+        ],
+        correct: 'B',
+        caption: 'Tam giác đều ABC cạnh a, hai vectơ chung gốc A',
+        explanation: `
+          <p>• Hai vectơ <span class="vec">AB</span> và <span class="vec">AC</span> đã <strong>chung gốc A</strong> nên (<span class="vec">AB</span>, <span class="vec">AC</span>) = ∠BAC = <strong>60°</strong>.</p>
+          <p>• Áp dụng định nghĩa: <span class="vec">AB</span> · <span class="vec">AC</span> = |<span class="vec">AB</span>| · |<span class="vec">AC</span>| · cos 60° = <span class="math-var">a</span> · <span class="math-var">a</span> · <span class="frac"><span class="num">1</span><span class="den">2</span></span> = <strong><span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup></span><span class="den">2</span></span></strong>.</p>`,
+        svg: (revealed) => `
+          <svg viewBox="0 0 300 240" class="w-full h-auto">
+            <defs>
+              <marker id="arr-b1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#2563eb"/></marker>
+              <marker id="arr-v1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#7c3aed"/></marker>
+            </defs>
+            <polygon points="150,32 62,190 238,190" fill="#eff6ff" stroke="#94a3b8" stroke-width="2"/>
+            <!-- Góc 60° tại A -->
+            <path d="M 134,60 A 32,32 0 0,0 166,60" fill="rgba(16,185,129,0.22)" stroke="#059669" stroke-width="2.5"/>
+            <text x="150" y="84" text-anchor="middle" font-size="14" font-weight="800" fill="#047857">60°</text>
+            <!-- Vectơ AB và AC -->
+            <line x1="150" y1="32" x2="65" y2="184" stroke="#2563eb" stroke-width="4" marker-end="url(#arr-b1)"/>
+            <line x1="150" y1="32" x2="235" y2="184" stroke="#7c3aed" stroke-width="4" marker-end="url(#arr-v1)"/>
+            <circle cx="150" cy="32" r="5" fill="#0f172a"/>
+            <text x="150" y="20" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">A</text>
+            <text x="48" y="202" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">B</text>
+            <text x="252" y="202" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">C</text>
+            <text x="92" y="106" font-size="15" font-style="italic" font-weight="700" fill="#1d4ed8">a</text>
+            <text x="204" y="106" font-size="15" font-style="italic" font-weight="700" fill="#6d28d9">a</text>
+            ${revealed ? '<text x="150" y="224" text-anchor="middle" font-size="13" font-weight="700" fill="#059669">✓ Chung gốc A ⇒ góc nhọn 60°</text>' : ''}
+          </svg>`,
+      },
+      {
+        id: 2,
+        category: 'Hình học • Phản xạ góc vuông',
+        text: 'Cho hình vuông <span class="math-var">ABCD</span> cạnh <span class="math-var">a</span>. Tính nhanh tích vô hướng <span class="vec">AB</span> · <span class="vec">AD</span>.',
+        options: [
+          { key: 'A', html: '<span class="vec vec-zero">0</span>' },
+          { key: 'B', html: '<span class="math-var">a</span><sup>2</sup>' },
+          { key: 'C', html: '0' },
+          { key: 'D', html: '<span class="math-var">a</span><sup>2</sup>√2' },
+        ],
+        correct: 'C',
+        caption: 'Hình vuông ABCD cạnh a — cẩn thận phân biệt số 0 và vectơ-không!',
+        explanation: `
+          <p>• Trong hình vuông <span class="math-var">ABCD</span>, hai cạnh <span class="math-var">AB</span> và <span class="math-var">AD</span> vuông góc nhau nên <span class="vec">AB</span> ⊥ <span class="vec">AD</span>.</p>
+          <p>• Do đó <span class="vec">AB</span> · <span class="vec">AD</span> = <strong>0</strong> (lưu ý: kết quả là <strong>số 0</strong>, KHÔNG chọn <span class="vec vec-zero">0</span>!).</p>`,
+        svg: (revealed) => `
+          <svg viewBox="0 0 300 240" class="w-full h-auto">
+            <defs>
+              <marker id="arr-b2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#2563eb"/></marker>
+              <marker id="arr-a2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#d97706"/></marker>
+            </defs>
+            <rect x="75" y="42" width="150" height="150" fill="#fffbeb" stroke="#94a3b8" stroke-width="2"/>
+            <!-- Ký hiệu góc vuông tại A -->
+            <polyline points="75,62 95,62 95,42" fill="rgba(245,158,11,0.25)" stroke="#d97706" stroke-width="2.5"/>
+            <line x1="75" y1="42" x2="219" y2="42" stroke="#2563eb" stroke-width="4" marker-end="url(#arr-b2)"/>
+            <line x1="75" y1="42" x2="75" y2="186" stroke="#d97706" stroke-width="4" marker-end="url(#arr-a2)"/>
+            <circle cx="75" cy="42" r="5" fill="#0f172a"/>
+            <text x="60" y="36" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">A</text>
+            <text x="238" y="36" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">B</text>
+            <text x="238" y="206" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">C</text>
+            <text x="60" y="206" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">D</text>
+            <text x="150" y="28" text-anchor="middle" font-size="15" font-style="italic" font-weight="700" fill="#1d4ed8">a</text>
+            ${revealed ? '<text x="150" y="224" text-anchor="middle" font-size="13" font-weight="800" fill="#b45309">✓ Vuông góc (90°) ⇒ Tích vô hướng = số 0</text>' : ''}
+          </svg>`,
+      },
+      {
+        id: 3,
+        category: '⚠ Câu bẫy kinh điển • Đưa về chung gốc',
+        text: 'Cho tam giác đều <span class="math-var">ABC</span> cạnh <span class="math-var">a</span>. Tính tích vô hướng <span class="vec">AB</span> · <span class="vec">BC</span>.',
+        options: [
+          { key: 'A', html: '<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup></span><span class="den">2</span></span>' },
+          { key: 'B', html: '<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup>√3</span><span class="den">2</span></span>' },
+          { key: 'C', html: '−<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup>√3</span><span class="den">2</span></span>' },
+          { key: 'D', html: '−<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup></span><span class="den">2</span></span>' },
+        ],
+        correct: 'D',
+        caption: 'Chú ý vị trí điểm đầu của hai vectơ AB và BC!',
+        explanation: `
+          <p>• Hai vectơ <span class="vec">AB</span> và <span class="vec">BC</span> <strong>chưa chung gốc</strong> (nối đuôi tại <span class="math-var">B</span>). Dựng <span class="vec">BD</span> = <span class="vec">AB</span> (kéo dài cạnh <span class="math-var">AB</span> qua <span class="math-var">B</span>).</p>
+          <p>• Khi đó: (<span class="vec">AB</span>, <span class="vec">BC</span>) = (<span class="vec">BD</span>, <span class="vec">BC</span>) = ∠DBC = 180° − 60° = <strong>120°</strong> (góc tù!).</p>
+          <p>• Suy ra: <span class="vec">AB</span> · <span class="vec">BC</span> = <span class="math-var">a</span> · <span class="math-var">a</span> · cos 120° = <span class="math-var">a</span><sup>2</sup> · (−<span class="frac"><span class="num">1</span><span class="den">2</span></span>) = <strong>−<span class="frac"><span class="num"><span class="math-var">a</span><sup>2</sup></span><span class="den">2</span></span></strong>.</p>`,
+        svg: (revealed) => `
+          <svg viewBox="0 0 320 240" class="w-full h-auto">
+            <defs>
+              <marker id="arr-b3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#2563eb"/></marker>
+              <marker id="arr-r3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#e11d48"/></marker>
+              <marker id="arr-g3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#059669"/></marker>
+            </defs>
+            <!-- Tam giác đều A(38,185), B(162,185), C(100,78) -->
+            <polygon points="38,185 162,185 100,78" fill="#fef2f2" stroke="#94a3b8" stroke-width="2"/>
+            <!-- Góc trong 60° -->
+            <path d="M 136,185 A 26,26 0 0,1 149,162" fill="none" stroke="#94a3b8" stroke-width="2"/>
+            <text x="128" y="172" font-size="12" font-weight="700" fill="#64748b">60°</text>
+            <!-- Vectơ AB và BC -->
+            <line x1="38" y1="185" x2="156" y2="185" stroke="#2563eb" stroke-width="4" marker-end="url(#arr-b3)"/>
+            <line x1="162" y1="185" x2="104" y2="84" stroke="#e11d48" stroke-width="4" marker-end="url(#arr-r3)"/>
+            ${revealed ? `
+              <!-- Vẽ thêm đường kéo dài BD = AB để lộ góc 120° -->
+              <line x1="162" y1="185" x2="280" y2="185" stroke="#059669" stroke-width="3.5" stroke-dasharray="6,4" marker-end="url(#arr-g3)"/>
+              <path d="M 196,185 A 34,34 0 0,0 145,155" fill="rgba(225,29,72,0.18)" stroke="#e11d48" stroke-width="2.5"/>
+              <text x="195" y="144" font-size="15" font-weight="800" fill="#be123c">120°</text>
+              <text x="292" y="190" font-size="17" font-style="italic" font-weight="700" fill="#047857">D</text>
+              <text x="225" y="206" text-anchor="middle" font-size="12" font-weight="700" fill="#047857">BD = AB</text>
+            ` : ''}
+            <circle cx="162" cy="185" r="4.5" fill="#0f172a"/>
+            <text x="24" y="192" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">A</text>
+            <text x="162" y="208" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">B</text>
+            <text x="100" y="66" text-anchor="middle" font-size="18" font-style="italic" font-weight="700" fill="#0f172a">C</text>
+          </svg>`,
+      },
+      {
+        id: 4,
+        category: 'Thực tiễn Vật lý • Công phát động',
+        text: 'Một lực kéo <span class="vec">F</span> không đổi có độ lớn <strong>100 N</strong> hợp với hướng chuyển động <span class="vec">MN</span> một góc <strong>60°</strong>, kéo vật dịch chuyển thẳng quãng đường <strong>5 m</strong>. Tính công sinh bởi lực <span class="vec">F</span>.',
+        options: [
+          { key: 'A', html: '250 J' },
+          { key: 'B', html: '500 J' },
+          { key: 'C', html: '250√3 J' },
+          { key: 'D', html: '−250 J' },
+        ],
+        correct: 'A',
+        caption: 'Vật chuyển động từ M đến N (5 m) dưới tác dụng lực kéo F = 100 N (α = 60°)',
+        explanation: `
+          <p>• Công cơ học sinh bởi lực <span class="vec">F</span> chính là tích vô hướng <span class="vec">F</span> · <span class="vec">MN</span>:</p>
+          <p>• <span class="math-var">A</span> = |<span class="vec">F</span>| · |<span class="vec">MN</span>| · cos 60° = 100 · 5 · <span class="frac"><span class="num">1</span><span class="den">2</span></span> = <strong>250 J</strong> (Công phát động dương).</p>`,
+        svg: (revealed) => `
+          <svg viewBox="0 0 320 220" class="w-full h-auto">
+            <defs>
+              <marker id="arr-g4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#059669"/></marker>
+              <marker id="arr-b4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#2563eb"/></marker>
+            </defs>
+            <!-- Sàn ngang -->
+            <line x1="20" y1="158" x2="300" y2="158" stroke="#64748b" stroke-width="3"/>
+            <!-- Khối hàng tại M -->
+            <rect x="44" y="114" width="60" height="44" rx="6" fill="#3b82f6" stroke="#1e3a8a" stroke-width="2"/>
+            <!-- Bóng mờ khối tại N -->
+            <rect x="220" y="114" width="60" height="44" rx="6" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,4"/>
+            <!-- Tia ngang tham chiếu -->
+            <line x1="104" y1="126" x2="185" y2="126" stroke="#2563eb" stroke-width="2" stroke-dasharray="4,4"/>
+            <!-- Góc 60° -->
+            <path d="M 140,126 A 36,36 0 0,0 122,95" fill="rgba(16,185,129,0.22)" stroke="#059669" stroke-width="2.2"/>
+            <text x="148" y="106" font-size="14" font-weight="800" fill="#047857">60°</text>
+            <!-- Vectơ lực F -->
+            <line x1="104" y1="126" x2="154" y2="40" stroke="#059669" stroke-width="4.5" marker-end="url(#arr-g4)"/>
+            <text x="166" y="48" font-size="15" font-weight="800" fill="#047857">F = 100 N</text>
+            <!-- Vectơ dịch chuyển MN -->
+            <line x1="74" y1="184" x2="246" y2="184" stroke="#2563eb" stroke-width="3.5" marker-end="url(#arr-b4)"/>
+            <text x="74" y="204" text-anchor="middle" font-size="15" font-style="italic" font-weight="700" fill="#1e3a8a">M</text>
+            <text x="250" y="204" text-anchor="middle" font-size="15" font-style="italic" font-weight="700" fill="#1e3a8a">N</text>
+            <text x="162" y="176" text-anchor="middle" font-size="14" font-weight="700" fill="#1d4ed8">d = 5 m</text>
+            ${revealed ? '<text x="235" y="90" text-anchor="middle" font-size="14" font-weight="800" fill="#059669">A = +250 J</text>' : ''}
+          </svg>`,
+      },
+      {
+        id: 5,
+        category: 'Thực tiễn Vật lý • Công cản (Công âm)',
+        text: 'Một thùng hàng trượt thẳng một đoạn dài <strong>4 m</strong> trên mặt sàn nằm ngang, chịu tác dụng của lực ma sát trượt có độ lớn <strong>25 N</strong> ngược chiều chuyển động (<span class="math-var">α</span> = 180°). Tính công sinh bởi lực ma sát đó.',
+        options: [
+          { key: 'A', html: '100 J' },
+          { key: 'B', html: '−100 J' },
+          { key: 'C', html: '0 J' },
+          { key: 'D', html: '−50 J' },
+        ],
+        correct: 'B',
+        caption: 'Thùng hàng trượt sang phải 4 m, lực ma sát ngược chiều sang trái (α = 180°)',
+        explanation: `
+          <p>• Lực ma sát trượt <span class="vec">F</span><sub>ms</sub> ngược hướng với vectơ độ dịch chuyển <span class="vec">d</span> nên góc giữa chúng là <strong>180°</strong>.</p>
+          <p>• Công sinh bởi lực ma sát: <span class="math-var">A</span> = 25 · 4 · cos 180° = 100 · (−1) = <strong>−100 J</strong> (Công cản mang dấu âm).</p>`,
+        svg: (revealed) => `
+          <svg viewBox="0 0 320 220" class="w-full h-auto">
+            <defs>
+              <marker id="arr-r5" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#e11d48"/></marker>
+              <marker id="arr-b5" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,1 L8,4 L0,7 Z" fill="#2563eb"/></marker>
+            </defs>
+            <!-- Mặt sàn nhám -->
+            <line x1="20" y1="150" x2="300" y2="150" stroke="#64748b" stroke-width="3"/>
+            <!-- Thùng hàng -->
+            <rect x="132" y="96" width="76" height="54" rx="6" fill="#f59e0b" stroke="#92400e" stroke-width="2.5"/>
+            <line x1="132" y1="123" x2="208" y2="123" stroke="#b45309" stroke-width="2"/>
+            <!-- Vectơ dịch chuyển sang phải -->
+            <line x1="170" y1="123" x2="284" y2="123" stroke="#2563eb" stroke-width="4" marker-end="url(#arr-b5)"/>
+            <text x="242" y="110" text-anchor="middle" font-size="14" font-weight="800" fill="#1d4ed8">d = 4 m</text>
+            <!-- Vectơ ma sát sang trái -->
+            <line x1="170" y1="123" x2="46" y2="123" stroke="#e11d48" stroke-width="4.5" marker-end="url(#arr-r5)"/>
+            <text x="88" y="110" text-anchor="middle" font-size="14" font-weight="800" fill="#be123c">Fms = 25 N</text>
+            <!-- Cung góc 180° -->
+            <path d="M 204,123 A 34,34 0 0,0 136,123" fill="rgba(225,29,72,0.16)" stroke="#e11d48" stroke-width="2.2"/>
+            <text x="170" y="78" text-anchor="middle" font-size="15" font-weight="800" fill="#be123c">α = 180°</text>
+            <circle cx="170" cy="123" r="4.5" fill="#0f172a"/>
+            ${revealed ? '<text x="170" y="186" text-anchor="middle" font-size="14" font-weight="800" fill="#e11d48">✓ Ngược hướng ⇒ A = −100 J (Công cản)</text>' : ''}
+          </svg>`,
+      },
+    ];
+
+    const arenaState = {
+      idx: 0,
+      score: 0,
+      streak: 0,
+      answered: false,
+      results: [], // { id, isCorrect, picked, correct }
+    };
+
+    function renderArenaQuestion() {
+      const q = arenaQuestions[arenaState.idx];
+      arenaState.answered = false;
+
+      document.getElementById('arena-question-card').classList.remove('hidden');
+      document.getElementById('arena-summary-card').classList.add('hidden');
+
+      document.getElementById('arena-score').textContent = arenaState.score;
+      document.getElementById('arena-progress-label').textContent = `Câu hỏi ${arenaState.idx + 1} / ${arenaQuestions.length}`;
+
+      const streakEl = document.getElementById('arena-streak-badge');
+      if (arenaState.streak >= 2) {
+        streakEl.textContent = `🔥 Chuỗi đúng: ${arenaState.streak}`;
+        streakEl.classList.remove('hidden');
+      } else {
+        streakEl.classList.add('hidden');
+      }
+
+      // Thanh tiến độ 5 ô
+      const bars = document.getElementById('arena-progress-bars').children;
+      for (let i = 0; i < bars.length; i++) {
+        if (i < arenaState.results.length) {
+          bars[i].className = arenaState.results[i].isCorrect
+            ? 'h-2.5 rounded-full bg-emerald-400 transition-all'
+            : 'h-2.5 rounded-full bg-rose-400 transition-all';
+        } else if (i === arenaState.idx) {
+          bars[i].className = 'h-2.5 rounded-full bg-yellow-300 transition-all';
+        } else {
+          bars[i].className = 'h-2.5 rounded-full bg-white/30 transition-all';
+        }
+      }
+
+      document.getElementById('arena-q-tag').textContent = `Câu ${q.id} / 5`;
+      document.getElementById('arena-q-category').textContent = q.category;
+      document.getElementById('arena-q-text').innerHTML = q.text;
+      document.getElementById('arena-svg-container').innerHTML = q.svg(false);
+      document.getElementById('arena-svg-caption').textContent = q.caption;
+      document.getElementById('arena-explanation').classList.add('hidden');
+
+      const optsDiv = document.getElementById('arena-options');
+      optsDiv.innerHTML = q.options.map(opt => `
+        <button onclick="selectArenaOption('${opt.key}')" id="arena-opt-${opt.key}"
+          class="p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-purple-500 hover:bg-purple-50/60 active:scale-[0.98] transition text-left flex items-center gap-3.5 shadow-sm">
+          <span class="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 font-extrabold flex items-center justify-center shrink-0 text-lg">${opt.key}</span>
+          <span class="text-xl sm:text-2xl font-extrabold text-slate-900">${opt.html}</span>
+        </button>`).join('');
+    }
+
+    function selectArenaOption(key) {
+      if (arenaState.answered) return;
+      arenaState.answered = true;
+      const q = arenaQuestions[arenaState.idx];
+      const isCorrect = key === q.correct;
+
+      arenaState.results.push({ id: q.id, isCorrect, picked: key, correct: q.correct });
+      if (isCorrect) {
+        arenaState.score += 20;
+        arenaState.streak++;
+        playCorrectSound();
+        launchConfetti(65);
+      } else {
+        arenaState.streak = 0;
+        playWrongSound();
+      }
+
+      // Cập nhật hình vẽ SVG sang trạng thái có đường phụ / giải thích
+      document.getElementById('arena-svg-container').innerHTML = q.svg(true);
+      document.getElementById('arena-score').textContent = arenaState.score;
+
+      // Tô màu các nút đáp án
+      q.options.forEach(opt => {
+        const btn = document.getElementById(`arena-opt-${opt.key}`);
+        btn.disabled = true;
+        btn.classList.remove('hover:border-purple-500', 'hover:bg-purple-50/60');
+        if (opt.key === q.correct) {
+          btn.className = 'p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-left flex items-center gap-3.5 shadow-sm';
+          btn.querySelector('span:first-child').className = 'w-10 h-10 rounded-xl bg-emerald-600 text-white font-extrabold flex items-center justify-center shrink-0 text-lg';
+        } else if (opt.key === key && !isCorrect) {
+          btn.className = 'p-4 rounded-2xl border-2 border-rose-500 bg-rose-50 text-left flex items-center gap-3.5 shadow-sm';
+          btn.querySelector('span:first-child').className = 'w-10 h-10 rounded-xl bg-rose-600 text-white font-extrabold flex items-center justify-center shrink-0 text-lg';
+        } else {
+          btn.className = 'p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 opacity-60 text-left flex items-center gap-3.5';
+        }
+      });
+
+      // Cập nhật thanh tiến độ ô hiện tại
+      const bars = document.getElementById('arena-progress-bars').children;
+      bars[arenaState.idx].className = isCorrect
+        ? 'h-2.5 rounded-full bg-emerald-400 transition-all'
+        : 'h-2.5 rounded-full bg-rose-400 transition-all';
+
+      // Hiển thị lời giải chi tiết
+      const expBox = document.getElementById('arena-explanation');
+      const expHeader = document.getElementById('arena-exp-header');
+      const expBody = document.getElementById('arena-exp-body');
+      const nextBtn = document.getElementById('arena-next-btn');
+
+      if (isCorrect) {
+        expBox.className = 'rounded-2xl p-4 sm:p-5 border-2 border-emerald-400 bg-emerald-50/90 space-y-2';
+        expHeader.className = 'text-lg font-extrabold text-emerald-800 flex items-center gap-2';
+        expHeader.innerHTML = '<span>🎉</span> Chính xác! (+20 điểm)';
+      } else {
+        expBox.className = 'rounded-2xl p-4 sm:p-5 border-2 border-rose-400 bg-rose-50/90 space-y-2';
+        expHeader.className = 'text-lg font-extrabold text-rose-800 flex items-center gap-2';
+        expHeader.innerHTML = `<span>💡</span> Chưa chính xác! Đáp án đúng là <strong>${q.correct}</strong>`;
+      }
+      expBody.innerHTML = q.explanation;
+      nextBtn.textContent = arenaState.idx < arenaQuestions.length - 1 ? 'Câu tiếp theo →' : 'Xem bảng tổng kết 🏆';
+      expBox.classList.remove('hidden');
+    }
+
+    function nextArenaQuestion() {
+      if (arenaState.idx < arenaQuestions.length - 1) {
+        arenaState.idx++;
+        renderArenaQuestion();
+      } else {
+        showArenaSummary();
+      }
+    }
+
+    function showArenaSummary() {
+      document.getElementById('arena-question-card').classList.add('hidden');
+      document.getElementById('arena-summary-card').classList.remove('hidden');
+
+      const correctCount = arenaState.results.filter(r => r.isCorrect).length;
+      document.getElementById('arena-final-score').textContent = arenaState.score;
+      document.getElementById('arena-final-correct').textContent = `${correctCount} / ${arenaQuestions.length}`;
+
+      const medal = document.getElementById('arena-medal');
+      const comment = document.getElementById('arena-final-comment');
+
+      if (correctCount === 5) {
+        medal.textContent = '🏆';
+        comment.textContent = 'Xuất sắc tuyệt đối! Bạn đã làm chủ hoàn toàn khái niệm góc, tích vô hướng, vượt qua cả câu bẫy 120° lẫn bài toán công cơ học!';
+        playFanfareSound();
+        launchConfetti(120);
+      } else if (correctCount >= 4) {
+        medal.textContent = '🥇';
+        comment.textContent = 'Rất tốt! Bạn nắm rất vững kiến thức Bài 11. Hãy xem lại nhanh câu bị nhầm để đạt điểm tuyệt đối nhé!';
+        playFanfareSound();
+        launchConfetti(70);
+      } else if (correctCount >= 2) {
+        medal.textContent = '🌟';
+        comment.textContent = 'Khởi đầu khá ổn! Bạn hãy ôn lại lưu ý ghép gốc tìm góc và dấu của công ở Trạm 2 & Trạm 3 rồi thử sức lại nhé!';
+      } else {
+        medal.textContent = '💪';
+        comment.textContent = 'Đừng nản nhé! Hãy mở lại Thẻ ghi nhớ SGK ở Trạm 3, thực hành kéo thả ở Trạm 2 và chinh phục lại Đấu trường!';
+      }
+
+      const reviewDiv = document.getElementById('arena-review-list');
+      reviewDiv.innerHTML = arenaQuestions.map((q, i) => {
+        const r = arenaState.results[i];
+        return `
+          <div class="flex items-center justify-between gap-3 p-3 rounded-xl border ${r.isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}">
+            <div class="text-sm font-bold text-slate-800">
+              <span>${r.isCorrect ? '✅' : '❌'}</span> Câu ${q.id}: <span class="font-medium text-slate-600">${q.category}</span>
+            </div>
+            <div class="text-xs font-extrabold px-2.5 py-1 rounded-lg ${r.isCorrect ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
+              ${r.isCorrect ? 'Đúng (+20đ)' : `Chọn ${r.picked} • Đúng: ${r.correct}`}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function restartArena() {
+      arenaState.idx = 0;
+      arenaState.score = 0;
+      arenaState.streak = 0;
+      arenaState.answered = false;
+      arenaState.results = [];
+      renderArenaQuestion();
+    }
+
+    /* =====================================================
+       KHỞI TẠO KHI TẢI TRANG & XỬ LÝ RESIZE
+       ===================================================== */
+    window.addEventListener('resize', () => {
+      resizeConfetti();
+      if (currentStation === 1) drawS1();
+      if (currentStation === 2) {
+        if (currentTab2 === '2a') resizeAndDraw2A(true);
+        else draw2B();
+      }
+    });
+
+    window.addEventListener('load', () => {
+      resizeConfetti();
+      switchStation(1);
+      select2AScenario(1);
+      switchTab2('2a');
+      update2BHUD();
+      renderArenaQuestion();
+    });
+  </script>
+</body>
+</html>
