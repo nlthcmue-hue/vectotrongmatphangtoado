@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RẮN VECTƠ — Khám phá Tọa độ của Vectơ (Toán 10)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #f0fdfa 0%, #f0f9ff 50%, #f8fafc 100%);
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* =====================================================
+       KÝ HIỆU TOÁN HỌC CHUẨN (VECTƠ CÓ MŨI TÊN TRÊN ĐẦU)
+       Không phụ thuộc font ngoài, sắc nét khi trình chiếu
+       ===================================================== */
+    .math-var {
+      font-style: italic;
+      font-weight: 700;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 1.08em;
+    }
+
+    .vec {
+      position: relative;
+      display: inline-block;
+      font-style: italic;
+      font-weight: 700;
+      font-family: 'Times New Roman', Georgia, serif;
+      padding-top: 0.28em;
+      line-height: 1.0;
+      margin: 0 0.06em;
+      font-size: 1.08em;
+    }
+
+    .vec.vec-zero {
+      font-style: normal;
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+    }
+
+    .vec::before {
+      content: "";
+      position: absolute;
+      top: 0.13em;
+      left: 0.02em;
+      right: 0.22em;
+      height: 0.085em;
+      background-color: currentColor;
+      border-radius: 1px;
+    }
+
+    .vec::after {
+      content: "";
+      position: absolute;
+      top: 0.035em;
+      right: -0.02em;
+      width: 0;
+      height: 0;
+      border-top: 0.135em solid transparent;
+      border-bottom: 0.135em solid transparent;
+      border-left: 0.28em solid currentColor;
+    }
+
+    /* Khu vực Canvas tương tác chống cuộn khi chạm */
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .canvas-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Thanh cuộn tinh gọn cho chuỗi biểu thức dài */
+    .thin-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .thin-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 999px;
+    }
+    .thin-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+
+    /* Hiệu ứng nhịp nhẹ cho nút hành động tiếp theo */
+    @keyframes softPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+      }
+    }
+    .pulse-emerald {
+      animation: softPulse 1.6s infinite;
+    }
+
+    @keyframes softPulseBlue {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.45);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(2, 132, 199, 0);
+      }
+    }
+    .pulse-sky {
+      animation: softPulseBlue 1.6s infinite;
+    }
+
+    /* Nút công tắc giáo viên */
+    .toggle-pill input:checked + .pill-ui {
+      background-color: #0d9488;
+      border-color: #0d9488;
+      color: #ffffff;
+    }
+    .toggle-pill input:checked + .pill-ui .dot {
+      background-color: #ffffff;
+      transform: translateX(12px);
+    }
+    .toggle-pill input:checked + .pill-ui .track {
+      background-color: rgba(255, 255, 255, 0.35);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- =====================================================
+       HEADER: TIÊU ĐỀ + BỘ CÔNG CỤ BẬT/TẮT CHO GIÁO VIÊN
+       ===================================================== -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-teal-100 shadow-sm">
+    <div class="max-w-[1440px] mx-auto px-3 sm:px-5 py-2.5 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
+      <!-- Logo & Tiêu đề -->
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-sky-600 text-white flex items-center justify-center text-2xl shadow-md shrink-0 select-none">
+            🐍
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-base sm:text-lg lg:text-xl font-extrabold tracking-tight text-slate-900">
+                RẮN VECTƠ <span class="text-teal-600 font-bold">—</span> Khám phá Tọa độ của Vectơ
+              </h1>
+              <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                Toán 10 • KNTT
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nút âm thanh mobile -->
+        <button onclick="toggleSound()" class="xl:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs transition" title="Bật/tắt âm thanh">
+          <span id="sound-icon-sm">🔊</span>
+        </button>
+      </div>
+
+      <!-- Bộ công cụ công tắc cho giáo viên -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <!-- 1. Vectơ đơn vị i, j -->
+        <label class="toggle-pill cursor-pointer select-none">
+          <input type="checkbox" id="opt-unit-vecs" checked class="sr-only" onchange="onToggleChange()" />
+          <span class="pill-ui inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold transition">
+            <span class="track w-7 h-4 rounded-full bg-slate-300 relative inline-flex items-center p-0.5 transition">
+              <span class="dot w-3 h-3 rounded-full bg-white shadow transition-transform"></span>
+            </span>
+            <span>Vectơ <span class="vec">i</span>, <span class="vec">j</span></span>
+          </span>
+        </label>
+
+        <!-- 2. Tọa độ điểm A, B trên lưới -->
+        <label class="toggle-pill cursor-pointer select-none">
+          <input type="checkbox" id="opt-point-coords" checked class="sr-only" onchange="onToggleChange()" />
+          <span class="pill-ui inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold transition">
+            <span class="track w-7 h-4 rounded-full bg-slate-300 relative inline-flex items-center p-0.5 transition">
+              <span class="dot w-3 h-3 rounded-full bg-white shadow transition-transform"></span>
+            </span>
+            <span>Tọa độ <span class="math-var">A, B</span></span>
+          </span>
+        </label>
+
+        <!-- 3. Tọa độ (x; y) sau khi rút gọn (MẶC ĐỊNH TẮT ở Tiết 1) -->
+        <label class="toggle-pill cursor-pointer select-none" title="Mặc định tắt ở Tiết 1 để học sinh tự khám phá trước Bước 3">
+          <input type="checkbox" id="opt-vec-coord" class="sr-only" onchange="onToggleChange()" />
+          <span class="pill-ui inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold transition">
+            <span class="track w-7 h-4 rounded-full bg-slate-300 relative inline-flex items-center p-0.5 transition">
+              <span class="dot w-3 h-3 rounded-full bg-white shadow transition-transform"></span>
+            </span>
+            <span>Hiện (<span class="math-var">x</span>; <span class="math-var">y</span>)</span>
+          </span>
+        </label>
+
+        <!-- 4. Tam giác vuông Pytago (Hỗ trợ Tiết 2) -->
+        <label class="toggle-pill cursor-pointer select-none" title="Hiển thị tam giác vuông Pytago và công thức tính độ dài |AB|">
+          <input type="checkbox" id="opt-pythagoras" class="sr-only" onchange="onToggleChange()" />
+          <span class="pill-ui inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold transition">
+            <span class="track w-7 h-4 rounded-full bg-slate-300 relative inline-flex items-center p-0.5 transition">
+              <span class="dot w-3 h-3 rounded-full bg-white shadow transition-transform"></span>
+            </span>
+            <span>Pytago |<span class="vec">AB</span>|</span>
+          </span>
+        </label>
+
+        <!-- 5. Âm thanh desktop -->
+        <button onclick="toggleSound()" class="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs sm:text-sm transition" title="Bật/tắt âm thanh">
+          <span id="sound-icon-xl">🔊</span>
+          <span id="sound-label-xl">Âm thanh</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================
+       NỘI DUNG CHÍNH (TỐI ƯU 16:9, RESPONSIVE ĐA THIẾT BỊ)
+       ===================================================== -->
+  <main class="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-5 py-3.5">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+      <!-- =================================================
+           CỘT TRÁI (8 CỘT): BIỂU THỨC + LƯỚI OXY + BÀI MẪU
+           ================================================= -->
+      <div class="lg:col-span-8 space-y-3">
+
+        <!-- 1. KHUNG BIỂU THỨC VECTƠ THỜI GIAN THỰC -->
+        <div class="bg-white rounded-2xl border-2 border-teal-100 shadow-sm p-3.5 sm:p-4 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="phase-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-sky-100 text-sky-800">
+                Bước 1/3: Chọn điểm A (Con Rắn)
+              </span>
+              <span id="step-counter-pill" class="hidden inline-flex items-center px-2.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 font-mono">
+                0 bước
+              </span>
+            </div>
+
+            <!-- Nút Rút gọn nổi bật khi rắn chạm táo -->
+            <div class="flex items-center gap-2">
+              <button id="btn-simplify" onclick="simplifyExpression()" class="hidden px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-sm sm:text-base shadow-md pulse-emerald transition flex items-center gap-1.5">
+                ✨ Rút gọn
+              </button>
+            </div>
+          </div>
+
+          <!-- Vùng hiển thị phương trình vectơ -->
+          <div id="expression-box" class="min-h-[62px] max-h-[124px] overflow-y-auto thin-scroll rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 flex items-center flex-wrap gap-y-1.5 text-lg sm:text-xl font-bold text-slate-800 leading-relaxed">
+            <!-- Được cập nhật động bởi JS -->
+          </div>
+
+          <!-- Thông báo nhỏ (toast inline, tuyệt đối không dùng alert) -->
+          <div id="inline-toast" class="hidden rounded-xl px-3.5 py-2 text-xs sm:text-sm font-bold flex items-center gap-2 transition"></div>
+
+          <!-- Thanh công thức Pytago (hiển thị khi bật Pytago & đã ăn táo) -->
+          <div id="pythagoras-bar" class="hidden rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 border-2 border-rose-200 px-4 py-2.5 text-sm sm:text-base text-slate-900 font-bold flex flex-wrap items-center justify-between gap-2">
+            <div id="pythagoras-formula" class="flex flex-wrap items-center gap-1.5"></div>
+            <span class="text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-rose-600 text-white">Định lí Pytago</span>
+          </div>
+        </div>
+
+        <!-- 2. MẶT PHẲNG TỌA ĐỘ OXY (HTML5 CANVAS) -->
+        <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden">
+          <div class="canvas-container h-[300px] sm:h-[380px] md:h-[420px] xl:h-[455px] bg-white">
+            <canvas id="coord-canvas"></canvas>
+          </div>
+          <!-- Chú thích màu sắc ngay dưới lưới -->
+          <div class="px-4 py-2 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600">
+            <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Rắn bắt đầu (<span class="math-var">A</span>)</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Quả táo (<span class="math-var">B</span>)</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-4 h-1 rounded bg-blue-600 inline-block"></span> Bước ngang (±1<span class="vec text-blue-700">i</span>)</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-4 h-1 rounded bg-orange-500 inline-block"></span> Bước dọc (±1<span class="vec text-orange-600">j</span>)</span>
+            </div>
+            <span class="text-slate-500 hidden sm:inline">Lưới: <span class="font-mono">x ∈ [−9; 9], y ∈ [−5; 5]</span></span>
+          </div>
+        </div>
+
+        <!-- 3. BỘ BÀI MẪU TRONG GIÁO ÁN & SGK (TIẾT 1 + TIẾT 2) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 space-y-2.5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 shrink-0">
+              📚 Bài mẫu Giáo án
+            </span>
+            <button onclick="loadPreset(-3, 2, 2, -1, 'Mẫu 1')" class="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-900 font-bold text-xs sm:text-sm transition active:scale-95">
+              Mẫu 1: A(−3; 2) → B(2; −1)
+            </button>
+            <button onclick="loadPreset(-3, -1, 1, 2, 'Mẫu 2 (VD2)')" class="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-900 font-bold text-xs sm:text-sm transition active:scale-95">
+              Mẫu 2 (VD2): A(−3; −1) → B(1; 2)
+            </button>
+            <button onclick="loadPreset(-4, 2, 1, -1, 'Mẫu 3 (Tiết 2)')" class="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-900 font-bold text-xs sm:text-sm transition active:scale-95">
+              Mẫu 3 (Tiết 2): A(−4; 2) → B(1; −1)
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 pt-1.5 border-t border-slate-100">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 shrink-0">
+              📝 Phiếu HT2
+            </span>
+            <button onclick="loadPreset(0, 0, 3, 2, 'Phiếu HT2 – Câu 1')" class="px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-slate-800 font-bold text-xs sm:text-sm transition active:scale-95 font-mono">
+              (0; 0) → (3; 2)
+            </button>
+            <button onclick="loadPreset(1, 1, 3, 4, 'Phiếu HT2 – Câu 2')" class="px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-slate-800 font-bold text-xs sm:text-sm transition active:scale-95 font-mono">
+              (1; 1) → (3; 4)
+            </button>
+            <button onclick="loadPreset(-4, 1, 1, -2, 'Phiếu HT2 – Câu 3')" class="px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-slate-800 font-bold text-xs sm:text-sm transition active:scale-95 font-mono">
+              (−4; 1) → (1; −2)
+            </button>
+            <button onclick="loadPreset(1, 2, -3, -1, 'Phiếu HT2 – Câu 4')" class="px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-slate-800 font-bold text-xs sm:text-sm transition active:scale-95 font-mono">
+              (1; 2) → (−3; −1)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================
+           CỘT PHẢI (4 CỘT): ĐIỀU KHIỂN + D-PAD + BẢNG SO SÁNH
+           ================================================= -->
+      <div class="lg:col-span-4 space-y-3">
+
+        <!-- 1. CÁC NÚT THAO TÁC CHÍNH -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 space-y-2.5">
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btn-start" onclick="startPlaying()" disabled class="py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-extrabold text-sm sm:text-base transition flex items-center justify-center gap-1.5 shadow-sm">
+              ▶ Bắt đầu
+            </button>
+            <button id="btn-undo" onclick="undoStep()" disabled class="py-2.5 px-3 rounded-xl bg-amber-100 hover:bg-amber-200 disabled:bg-slate-100 disabled:text-slate-400 text-amber-900 font-extrabold text-sm sm:text-base border border-amber-200 disabled:border-slate-200 transition flex items-center justify-center gap-1.5">
+              ↶ Hoàn tác
+            </button>
+          </div>
+
+          <button id="btn-retry-path" onclick="tryAnotherPath()" disabled class="w-full py-2.5 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-extrabold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-sm">
+            🔄 Thử đường đi khác <span class="text-xs font-semibold opacity-90">(Giữ nguyên A, B)</span>
+          </button>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="resetAll()" class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm border border-slate-200 transition flex items-center justify-center gap-1.5">
+              ✕ Chọn điểm mới
+            </button>
+            <button onclick="randomAB()" class="py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold text-xs sm:text-sm border border-indigo-200 transition flex items-center justify-center gap-1.5">
+              🎲 Ngẫu nhiên A, B
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. CỤM 4 PHÍM MŨI TÊN CẢM ỨNG + QUY ƯỚC -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+              🎮 Điều khiển Rắn
+            </h2>
+            <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+              Phím mũi tên / WASD
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 max-w-[290px] mx-auto">
+            <!-- Hàng 1: Lên -->
+            <div></div>
+            <button id="dpad-up" onclick="moveSnake(0, 1)" class="dpad-btn p-2.5 rounded-2xl bg-orange-50 hover:bg-orange-100 active:scale-95 border-2 border-orange-300 text-orange-800 font-extrabold transition flex flex-col items-center justify-center shadow-sm">
+              <span class="text-xl leading-none">↑</span>
+              <span class="text-xs sm:text-sm mt-0.5">+1<span class="vec">j</span></span>
+            </button>
+            <div></div>
+
+            <!-- Hàng 2: Trái - Tâm - Phải -->
+            <button id="dpad-left" onclick="moveSnake(-1, 0)" class="dpad-btn p-2.5 rounded-2xl bg-blue-50 hover:bg-blue-100 active:scale-95 border-2 border-blue-300 text-blue-800 font-extrabold transition flex flex-col items-center justify-center shadow-sm">
+              <span class="text-xl leading-none">←</span>
+              <span class="text-xs sm:text-sm mt-0.5">−1<span class="vec">i</span></span>
+            </button>
+
+            <div class="rounded-2xl bg-slate-50 border border-dashed border-slate-200 flex flex-col items-center justify-center p-1 text-center">
+              <span class="text-lg">🐍</span>
+              <span id="dpad-pos" class="font-mono text-[11px] font-bold text-slate-600 mt-0.5">—</span>
+            </div>
+
+            <button id="dpad-right" onclick="moveSnake(1, 0)" class="dpad-btn p-2.5 rounded-2xl bg-blue-50 hover:bg-blue-100 active:scale-95 border-2 border-blue-300 text-blue-800 font-extrabold transition flex flex-col items-center justify-center shadow-sm">
+              <span class="text-xl leading-none">→</span>
+              <span class="text-xs sm:text-sm mt-0.5">+1<span class="vec">i</span></span>
+            </button>
+
+            <!-- Hàng 3: Xuống -->
+            <div></div>
+            <button id="dpad-down" onclick="moveSnake(0, -1)" class="dpad-btn p-2.5 rounded-2xl bg-orange-50 hover:bg-orange-100 active:scale-95 border-2 border-orange-300 text-orange-800 font-extrabold transition flex flex-col items-center justify-center shadow-sm">
+              <span class="text-xl leading-none">↓</span>
+              <span class="text-xs sm:text-sm mt-0.5">−1<span class="vec">j</span></span>
+            </button>
+            <div></div>
+          </div>
+        </div>
+
+        <!-- 3. BẢNG SO SÁNH CÁC ĐƯỜNG ĐI (CHỨNG THỰC TÍNH DUY NHẤT) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-1.5">
+                📊 So sánh các đường đi
+              </h2>
+              <p id="history-pair-label" class="text-xs text-slate-500 font-medium">
+                Cặp điểm hiện tại: chưa chọn A, B
+              </p>
+            </div>
+            <button onclick="clearHistory()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs transition">
+              Xóa lịch sử
+            </button>
+          </div>
+
+          <div class="max-h-[190px] overflow-y-auto thin-scroll rounded-xl border border-slate-200">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead class="bg-teal-50 text-teal-900 sticky top-0">
+                <tr>
+                  <th class="py-2 px-2.5 font-extrabold">Lần</th>
+                  <th class="py-2 px-2.5 font-extrabold">Số bước</th>
+                  <th class="py-2 px-2.5 font-extrabold">Kết quả rút gọn</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="3" class="py-5 px-3 text-center text-slate-400 italic text-xs">
+                    Hoàn thành 1 đường đi và nhấn <strong>"Rút gọn"</strong> để lưu lại, sau đó nhấn <strong>"Thử đường đi khác"</strong> để so sánh!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Kết luận tự động xuất hiện khi HS đã thử >= 2 đường đi khác nhau -->
+          <div id="uniqueness-callout" class="hidden rounded-xl bg-emerald-50 border border-emerald-300 px-3 py-2 text-xs sm:text-sm text-emerald-900 font-bold">
+            ✨ <strong>Nhận xét:</strong> Dù chọn đường đi ngắn hay vòng vèo (số bước khác nhau), kết quả phân tích cuối cùng theo <span class="vec">i</span>, <span class="vec">j</span> vẫn <u>DUY NHẤT</u>!
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- =====================================================
+       JAVASCRIPT: LOGIC MÔ PHỎNG, CANVAS & ÂM THANH
+       ===================================================== -->
+  <script>
+    /* =====================================================
+       1. CẤU HÌNH LƯỚI & TRẠNG THÁI ỨNG DỤNG
+       ===================================================== */
+    const GRID = {
+      xMin: -9,
+      xMax: 9,
+      yMin: -5,
+      yMax: 5,
+    };
+
+    const state = {
+      phase: 'pickA', // 'pickA' | 'pickB' | 'ready' | 'playing' | 'reached' | 'simplified'
+      pointA: null,   // { x, y }
+      pointB: null,   // { x, y }
+      pos: null,      // vị trí hiện tại của đầu rắn { x, y }
+      facing: { dx: 1, dy: 0 }, // hướng quay đầu rắn
+      steps: [],      // mảng các bước { dx, dy, from: {x,y}, to: {x,y} }
+      hoverCell: null,// điểm lưới đang rê chuột tới { x, y }
+      history: [],    // mảng các lần rút gọn cho cặp (A, B) hiện tại
+      particles: [],  // hạt pháo hoa nhỏ khi ăn táo
+      soundEnabled: true,
+      opts: {
+        showUnitVecs: true,
+        showPointCoords: true,
+        showVecCoord: false, // Mặc định TẮT cho Tiết 1
+        showPythagoras: false,
+      },
+    };
+
+    const canvas = document.getElementById('coord-canvas');
+    let canvasMetrics = { w: 800, h: 440, originX: 400, originY: 220, cell: 36 };
+    let toastTimer = null;
+    let particleAnimId = null;
+
+    /* =====================================================
+       2. HỆ THỐNG ÂM THANH NHẸ NHÀNG (WEB AUDIO API)
+       ===================================================== */
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(notes, durations, type = 'sine', vol = 0.1) {
+      if (!state.soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        let t = ctx.currentTime;
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(vol, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + durations[i]);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + durations[i]);
+          t += durations[i] * 0.85;
+        });
+      } catch (err) {
+        // Không lỗi nếu trình duyệt hạn chế audio
+      }
+    }
+
+    const sfx = {
+      pick: () => playSound([520], [0.08], 'sine', 0.09),
+      stepH: () => playSound([440], [0.06], 'triangle', 0.08),
+      stepV: () => playSound([523.25], [0.06], 'triangle', 0.08),
+      undo: () => playSound([350], [0.07], 'sine', 0.07),
+      bump: () => playSound([190], [0.1], 'sawtooth', 0.05),
+      eat: () => playSound([523.25, 659.25, 783.99], [0.1, 0.1, 0.24], 'triangle', 0.13),
+      simplify: () => playSound([587.33, 880, 1174.66], [0.09, 0.09, 0.25], 'sine', 0.12),
+    };
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      const icon = state.soundEnabled ? '🔊' : '🔇';
+      document.getElementById('sound-icon-sm').textContent = icon;
+      document.getElementById('sound-icon-xl').textContent = icon;
+      document.getElementById('sound-label-xl').textContent = state.soundEnabled ? 'Âm thanh' : 'Đã tắt';
+      if (state.soundEnabled) sfx.pick();
+    }
+
+    /* =====================================================
+       3. TIỆN ÍCH TOÁN HỌC & ĐỊNH DẠNG KÝ HIỆU CHUẨN
+       ===================================================== */
+    function fmtSignNum(n) {
+      return n < 0 ? `−${Math.abs(n)}` : `${n}`;
+    }
+
+    function fmtPoint(pt, name) {
+      return `<span class="math-var">${name}</span>(${fmtSignNum(pt.x)}; ${fmtSignNum(pt.y)})`;
+    }
+
+    function fmtPointPlain(pt, name) {
+      const sx = pt.x < 0 ? `−${Math.abs(pt.x)}` : `${pt.x}`;
+      const sy = pt.y < 0 ? `−${Math.abs(pt.y)}` : `${pt.y}`;
+      return `${name}(${sx}; ${sy})`;
+    }
+
+    /**
+     * Rút gọn căn bậc hai √n thành dạng k√m
+     */
+    function simplifyRadical(n) {
+      if (n === 0) return { exact: '0', isInt: true, approx: '0' };
+      let k = 1;
+      let m = n;
+      for (let d = 2; d * d <= m; d++) {
+        while (m % (d * d) === 0) {
+          k *= d;
+          m /= d * d;
+        }
+      }
+      const approx = Math.sqrt(n).toFixed(2).replace('.', ',');
+      if (m === 1) return { exact: `${k}`, isInt: true, approx: `${k}` };
+      if (k === 1) return { exact: `√${m}`, isInt: false, approx };
+      return { exact: `${k}√${m}`, isInt: false, approx };
+    }
+
+    /**
+     * Định dạng chuẩn toán học cho tổ hợp tuyến tính dx*i + dy*j:
+     * - 0i + 0j -> 0 (vectơ không)
+     * - 0i + 3j -> 3j
+     * - 1i - 1j -> i - j
+     * - -1i + 1j -> -i + j
+     * - 5i - 3j -> 5i - 3j
+     */
+    function formatSimplifiedVectorHTML(dx, dy) {
+      if (dx === 0 && dy === 0) {
+        return `<span class="vec vec-zero text-slate-900">0</span>`;
+      }
+
+      let parts = [];
+
+      if (dx !== 0) {
+        const coeff = Math.abs(dx) === 1 ? '' : Math.abs(dx).toString();
+        const sign = dx < 0 ? '−' : '';
+        parts.push(`<span class="text-blue-700">${sign}${coeff}<span class="vec">i</span></span>`);
+      }
+
+      if (dy !== 0) {
+        const coeff = Math.abs(dy) === 1 ? '' : Math.abs(dy).toString();
+        if (parts.length === 0) {
+          const sign = dy < 0 ? '−' : '';
+          parts.push(`<span class="text-orange-600">${sign}${coeff}<span class="vec">j</span></span>`);
+        } else {
+          const op = dy < 0 ? ' − ' : ' + ';
+          parts.push(`<span class="text-slate-700 mx-0.5">${op}</span><span class="text-orange-600">${coeff}<span class="vec">j</span></span>`);
+        }
+      }
+
+      return parts.join('');
+    }
+
+    /**
+     * Hiển thị thông báo ngắn gọn ngay trong khung biểu thức (không dùng alert)
+     */
+    function showToast(msg, type = 'info') {
+      const el = document.getElementById('inline-toast');
+      const styles = {
+        info: 'bg-sky-50 border border-sky-200 text-sky-900',
+        warn: 'bg-amber-50 border border-amber-300 text-amber-900',
+        success: 'bg-emerald-50 border border-emerald-300 text-emerald-900',
+      };
+      el.className = `rounded-xl px-3.5 py-2 text-xs sm:text-sm font-bold flex items-center gap-2 transition ${styles[type] || styles.info}`;
+      el.innerHTML = msg;
+      el.classList.remove('hidden');
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 3600);
+    }
+
+    function hideToast() {
+      const el = document.getElementById('inline-toast');
+      el.classList.add('hidden');
+      if (toastTimer) clearTimeout(toastTimer);
+    }
+
+    /* =====================================================
+       4. HỆ TỌA ĐỘ CANVAS & HÀM VẼ ĐỒ HỌA SẮC NÉT
+       ===================================================== */
+    function setupCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(300, rect.width);
+      const h = Math.max(240, rect.height);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Giữ tỉ lệ ô vuông 1:1 chuẩn hình học
+      const padX = 34;
+      const padY = 26;
+      const cols = GRID.xMax - GRID.xMin; // 18
+      const rows = GRID.yMax - GRID.yMin; // 10
+      const cell = Math.min((w - padX * 2) / cols, (h - padY * 2) / rows);
+      const originX = w / 2;
+      const originY = h / 2;
+
+      canvasMetrics = { w, h, originX, originY, cell };
+      return ctx;
+    }
+
+    function gridToPx(gx, gy) {
+      return {
+        x: canvasMetrics.originX + gx * canvasMetrics.cell,
+        y: canvasMetrics.originY - gy * canvasMetrics.cell,
+      };
+    }
+
+    function pxToGrid(px, py) {
+      const gx = Math.round((px - canvasMetrics.originX) / canvasMetrics.cell);
+      const gy = Math.round((canvasMetrics.originY - py) / canvasMetrics.cell);
+      if (gx < GRID.xMin || gx > GRID.xMax || gy < GRID.yMin || gy > GRID.yMax) {
+        return null;
+      }
+      return { x: gx, y: gy };
+    }
+
+    function drawArrow(ctx, x1, y1, x2, y2, color, width = 3, headLen = 11, dashed = false) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 2) return;
+      const ang = Math.atan2(dy, dx);
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      if (dashed) ctx.setLineDash([6, 4]);
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2 - Math.cos(ang) * headLen * 0.65, y2 - Math.sin(ang) * headLen * 0.65);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headLen * Math.cos(ang - Math.PI / 6.2), y2 - headLen * Math.sin(ang - Math.PI / 6.2));
+      ctx.lineTo(x2 - headLen * Math.cos(ang + Math.PI / 6.2), y2 - headLen * Math.sin(ang + Math.PI / 6.2));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCanvasVecLabel(ctx, text, x, y, color = '#0f172a', size = 15) {
+      ctx.save();
+      ctx.font = `italic 700 ${size}px "Times New Roman", Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Viền nền trắng mảnh để chữ luôn nổi rõ trên lưới
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+
+      const tw = ctx.measureText(text).width;
+      const ay = y - size * 0.62;
+      const ax1 = x - tw / 2 - 1;
+      const ax2 = x + tw / 2 + 2.5;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(ax1, ay);
+      ctx.lineTo(ax2, ay);
+      ctx.moveTo(ax2 - 4, ay - 2.5);
+      ctx.lineTo(ax2, ay);
+      ctx.lineTo(ax2 - 4, ay + 2.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPillLabel(ctx, text, x, y, bgColor, textColor, borderColor = null) {
+      ctx.save();
+      ctx.font = '700 12px "Inter", sans-serif';
+      const padX = 7;
+      const tw = ctx.measureText(text).width;
+      const bw = tw + padX * 2;
+      const bh = 21;
+      ctx.fillStyle = bgColor;
+      ctx.beginPath();
+      ctx.roundRect(x - bw / 2, y - bh / 2, bw, bh, 7);
+      ctx.fill();
+      if (borderColor) {
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x, y + 0.5);
+      ctx.restore();
+    }
+
+    /**
+     * Vẽ Quả Táo đỏ dễ thương tại điểm B
+     */
+    function drawApple(ctx, px, py, radius) {
+      ctx.save();
+      ctx.translate(px, py);
+
+      // Bóng đổ nhẹ
+      ctx.beginPath();
+      ctx.ellipse(0, radius * 0.88, radius * 0.72, radius * 0.28, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.14)';
+      ctx.fill();
+
+      // Thân quả táo
+      const grad = ctx.createRadialGradient(-radius * 0.3, -radius * 0.25, radius * 0.1, 0, 0, radius);
+      grad.addColorStop(0, '#fb7185');
+      grad.addColorStop(0.55, '#e11d48');
+      grad.addColorStop(1, '#9f1239');
+
+      ctx.beginPath();
+      ctx.arc(-radius * 0.24, 0, radius * 0.72, 0, Math.PI * 2);
+      ctx.arc(radius * 0.24, 0, radius * 0.72, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Vệt sáng bóng
+      ctx.beginPath();
+      ctx.ellipse(-radius * 0.35, -radius * 0.28, radius * 0.2, radius * 0.34, -0.4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
+      ctx.fill();
+
+      // Cuống nâu
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, -radius * 0.55);
+      ctx.quadraticCurveTo(2, -radius * 1.1, 4, -radius * 1.18);
+      ctx.stroke();
+
+      // Lá xanh
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.ellipse(radius * 0.45, -radius * 0.92, radius * 0.45, radius * 0.22, -0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#15803d';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    /**
+     * Vẽ Đầu Con Rắn xanh lá xoay đúng hướng di chuyển
+     */
+    function drawSnakeHead(ctx, px, py, radius, dir) {
+      const ang = Math.atan2(-dir.dy, dir.dx); // canvas y ngược với Oxy
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(ang);
+
+      // Lưỡi đỏ chẻ đôi phía trước
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(radius * 0.85, 0);
+      ctx.lineTo(radius * 1.48, 0);
+      ctx.moveTo(radius * 1.32, 0);
+      ctx.lineTo(radius * 1.64, -radius * 0.26);
+      ctx.moveTo(radius * 1.32, 0);
+      ctx.lineTo(radius * 1.64, radius * 0.26);
+      ctx.stroke();
+
+      // Đầu rắn bo tròn
+      const grad = ctx.createRadialGradient(-radius * 0.2, -radius * 0.2, 2, 0, 0, radius * 1.15);
+      grad.addColorStop(0, '#4ade80');
+      grad.addColorStop(0.65, '#16a34a');
+      grad.addColorStop(1, '#15803d');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius * 1.05, radius * 0.88, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#14532d';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // Hai mắt trắng có con ngươi đen
+      [-radius * 0.38, radius * 0.38].forEach(ey => {
+        ctx.beginPath();
+        ctx.arc(radius * 0.26, ey, radius * 0.28, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(radius * 0.36, ey, radius * 0.14, 0, Math.PI * 2);
+        ctx.fillStyle = '#0f172a';
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    /**
+     * Hàm vẽ toàn bộ mặt phẳng tọa độ Oxy và các đối tượng
+     */
+    function drawCanvas() {
+      const ctx = setupCanvas();
+      const { w, h, originX, originY, cell } = canvasMetrics;
+      const xLeft = gridToPx(GRID.xMin, 0).x;
+      const xRight = gridToPx(GRID.xMax, 0).x;
+      const yTop = gridToPx(0, GRID.yMax).y;
+      const yBot = gridToPx(0, GRID.yMin).y;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. Nền lưới nhẹ
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+
+      // Đường lưới dọc & ngang
+      ctx.save();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      for (let gx = GRID.xMin; gx <= GRID.xMax; gx++) {
+        const px = gridToPx(gx, 0).x;
+        ctx.beginPath();
+        ctx.moveTo(px, yTop);
+        ctx.lineTo(px, yBot);
+        ctx.stroke();
+      }
+      for (let gy = GRID.yMin; gy <= GRID.yMax; gy++) {
+        const py = gridToPx(0, gy).y;
+        ctx.beginPath();
+        ctx.moveTo(xLeft, py);
+        ctx.lineTo(xRight, py);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 2. Hai trục tọa độ Ox, Oy có mũi tên & nhãn số
+      drawArrow(ctx, xLeft - 10, originY, xRight + 16, originY, '#334155', 2.2, 10);
+      drawArrow(ctx, originX, yBot + 10, originX, yTop - 16, '#334155', 2.2, 10);
+
+      ctx.save();
+      ctx.font = 'italic 700 15px "Times New Roman", serif';
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('x', xRight + 19, originY + 1);
+      ctx.textAlign = 'center';
+      ctx.fillText('y', originX + 14, yTop - 14);
+      ctx.fillText('O', originX - 11, originY + 13);
+
+      // Nhãn số trên trục Ox, Oy
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#64748b';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (let gx = GRID.xMin; gx <= GRID.xMax; gx++) {
+        if (gx === 0) continue;
+        const px = gridToPx(gx, 0).x;
+        // Chỉ ghi đủ rõ, nếu màn hình rất nhỏ thì cách 2 đơn vị
+        if (cell < 24 && Math.abs(gx) % 2 !== 0) continue;
+        ctx.fillText(gx.toString().replace('-', '−'), px, originY + 6);
+      }
+
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let gy = GRID.yMin; gy <= GRID.yMax; gy++) {
+        if (gy === 0) continue;
+        const py = gridToPx(0, gy).y;
+        ctx.fillText(gy.toString().replace('-', '−'), originX - 7, py);
+      }
+      ctx.restore();
+
+      // 3. Hiển thị 2 vectơ đơn vị i, j tại gốc O (nếu công tắc bật)
+      if (state.opts.showUnitVecs) {
+        const oPx = gridToPx(0, 0);
+        const iPx = gridToPx(1, 0);
+        const jPx = gridToPx(0, 1);
+        drawArrow(ctx, oPx.x, oPx.y, iPx.x, iPx.y, '#2563eb', 3.4, 10);
+        drawArrow(ctx, oPx.x, oPx.y, jPx.x, jPx.y, '#ea580c', 3.4, 10);
+        drawCanvasVecLabel(ctx, 'i', (oPx.x + iPx.x) / 2, oPx.y - 12, '#1d4ed8', 15);
+        drawCanvasVecLabel(ctx, 'j', oPx.x + 13, (oPx.y + jPx.y) / 2, '#c2410c', 15);
+      }
+
+      // 4. Điểm sáng gợi ý khi rê chuột vào giao điểm lưới (ở pha pickA / pickB)
+      if (state.hoverCell && (state.phase === 'pickA' || state.phase === 'pickB')) {
+        const hp = gridToPx(state.hoverCell.x, state.hoverCell.y);
+        const hColor = state.phase === 'pickA' ? '#10b981' : '#e11d48';
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(hp.x, hp.y, Math.max(9, cell * 0.3), 0, Math.PI * 2);
+        ctx.fillStyle = state.phase === 'pickA' ? 'rgba(16, 185, 129, 0.22)' : 'rgba(225, 29, 72, 0.2)';
+        ctx.fill();
+        ctx.strokeStyle = hColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+
+        const previewLbl = state.opts.showPointCoords
+          ? `${state.phase === 'pickA' ? 'A' : 'B'}(${fmtSignNum(state.hoverCell.x)}; ${fmtSignNum(state.hoverCell.y)})`
+          : (state.phase === 'pickA' ? 'Đặt Rắn A' : 'Đặt Táo B');
+        drawPillLabel(ctx, previewLbl, hp.x, hp.y - 24, '#0f172a', '#ffffff');
+      }
+
+      // 5. Đường nối nét đứt mờ từ A đến B trước khi ăn táo (gợi ý hướng đích)
+      if (state.pointA && state.pointB && state.phase !== 'reached' && state.phase !== 'simplified') {
+        const aPx = gridToPx(state.pointA.x, state.pointA.y);
+        const bPx = gridToPx(state.pointB.x, state.pointB.y);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.65)';
+        ctx.setLineDash([6, 6]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(aPx.x, aPx.y);
+        ctx.lineTo(bPx.x, bPx.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 6. Vẽ Tam giác vuông Pytago (nếu công tắc bật và đã ăn táo)
+      const hasEaten = state.phase === 'reached' || state.phase === 'simplified';
+      if (state.opts.showPythagoras && hasEaten && state.pointA && state.pointB) {
+        const a = state.pointA;
+        const b = state.pointB;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const aPx = gridToPx(a.x, a.y);
+        const bPx = gridToPx(b.x, b.y);
+        const hPx = gridToPx(b.x, a.y); // Đỉnh góc vuông H(xB; yA)
+
+        if (dx !== 0 && dy !== 0) {
+          ctx.save();
+          // Tô nền tam giác vuông nhẹ
+          ctx.fillStyle = 'rgba(244, 63, 94, 0.08)';
+          ctx.beginPath();
+          ctx.moveTo(aPx.x, aPx.y);
+          ctx.lineTo(hPx.x, hPx.y);
+          ctx.lineTo(bPx.x, bPx.y);
+          ctx.closePath();
+          ctx.fill();
+
+          // Hai cạnh góc vuông nét đứt nổi bật
+          ctx.setLineDash([7, 5]);
+          ctx.lineWidth = 2.8;
+          ctx.strokeStyle = '#2563eb';
+          ctx.beginPath();
+          ctx.moveTo(aPx.x, aPx.y);
+          ctx.lineTo(hPx.x, hPx.y);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#e11d48';
+          ctx.beginPath();
+          ctx.moveTo(hPx.x, hPx.y);
+          ctx.lineTo(bPx.x, bPx.y);
+          ctx.stroke();
+
+          // Ký hiệu góc vuông tại H
+          ctx.setLineDash([]);
+          const sq = Math.min(13, cell * 0.35);
+          const sx = dx > 0 ? -sq : sq;
+          const sy = dy > 0 ? -sq : sq;
+          ctx.strokeStyle = '#be123c';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(hPx.x + sx, hPx.y);
+          ctx.lineTo(hPx.x + sx, hPx.y + sy);
+          ctx.lineTo(hPx.x, hPx.y + sy);
+          ctx.stroke();
+          ctx.restore();
+
+          // Nhãn độ dài |Δx| và |Δy|
+          const yOffH = dy > 0 ? 18 : -18;
+          drawPillLabel(ctx, `|Δx| = ${Math.abs(dx)}`, (aPx.x + hPx.x) / 2, hPx.y + yOffH, '#eff6ff', '#1d4ed8', '#93c5fd');
+          const xOffV = dx > 0 ? 36 : -36;
+          drawPillLabel(ctx, `|Δy| = ${Math.abs(dy)}`, hPx.x + xOffV, (hPx.y + bPx.y) / 2, '#fff1f2', '#be123c', '#fda4af');
+        }
+      }
+
+      // 7. Vẽ thân rắn & các đoạn mũi tên vectơ đơn vị dọc đường đi
+      if (state.steps.length > 0) {
+        // Đếm số lần đi qua cùng một cạnh vô hướng để dịch lệch nhẹ khi đi lùi/vòng lặp
+        const edgeCount = {};
+
+        // Vẽ thân rắn mềm màu xanh ngọc nhạt phía dưới
+        ctx.save();
+        ctx.strokeStyle = 'rgba(34, 197, 94, 0.36)';
+        ctx.lineWidth = Math.max(9, cell * 0.3);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        const firstPx = gridToPx(state.steps[0].from.x, state.steps[0].from.y);
+        ctx.moveTo(firstPx.x, firstPx.y);
+        for (const st of state.steps) {
+          const toPx = gridToPx(st.to.x, st.to.y);
+          ctx.lineTo(toPx.x, toPx.y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // Vẽ từng mũi tên vectơ đơn vị màu xanh dương (±1i) / cam (±1j)
+        state.steps.forEach((st) => {
+          const k1 = `${st.from.x},${st.from.y}`;
+          const k2 = `${st.to.x},${st.to.y}`;
+          const edgeKey = k1 < k2 ? `${k1}|${k2}` : `${k2}|${k1}`;
+          const count = edgeCount[edgeKey] || 0;
+          edgeCount[edgeKey] = count + 1;
+
+          // Dịch lệch vuông góc nhẹ nếu đi trùng cạnh (đi lùi hoặc lặp vòng)
+          const shift = count === 0 ? 0 : (count % 2 === 1 ? 1 : -1) * Math.ceil(count / 2) * 5;
+          const p1 = gridToPx(st.from.x, st.from.y);
+          const p2 = gridToPx(st.to.x, st.to.y);
+          const nx = st.dy !== 0 ? shift : 0;
+          const ny = st.dx !== 0 ? shift : 0;
+
+          const col = st.dx !== 0 ? '#2563eb' : '#ea580c';
+          drawArrow(ctx, p1.x + nx, p1.y + ny, p2.x + nx, p2.y + ny, col, 2.6, 8.5);
+        });
+      }
+
+      // 8. Mốc điểm bắt đầu A
+      if (state.pointA) {
+        const aPx = gridToPx(state.pointA.x, state.pointA.y);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(aPx.x, aPx.y, Math.max(7, cell * 0.22), 0, Math.PI * 2);
+        ctx.fillStyle = '#dcfce7';
+        ctx.fill();
+        ctx.strokeStyle = '#15803d';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 9. Quả Táo tại điểm B (khi chưa ăn hoặc làm mờ nhẹ khi đã ăn)
+      if (state.pointB) {
+        const bPx = gridToPx(state.pointB.x, state.pointB.y);
+        ctx.save();
+        if (hasEaten) ctx.globalAlpha = 0.45;
+        drawApple(ctx, bPx.x, bPx.y, Math.max(10, cell * 0.32));
+        ctx.restore();
+      }
+
+      // 10. Mũi tên vectơ tổng hợp AB nổi bật khi rắn đã ăn được táo
+      if (hasEaten && state.pointA && state.pointB) {
+        const aPx = gridToPx(state.pointA.x, state.pointA.y);
+        const bPx = gridToPx(state.pointB.x, state.pointB.y);
+        drawArrow(ctx, aPx.x, aPx.y, bPx.x, bPx.y, '#0369a1', 4.5, 14);
+
+        // Nhãn vectơ AB đặt lệch nhẹ khỏi đoạn thẳng
+        const mx = (aPx.x + bPx.x) / 2;
+        const my = (aPx.y + bPx.y) / 2;
+        const vx = bPx.x - aPx.x;
+        const vy = bPx.y - aPx.y;
+        const vlen = Math.hypot(vx, vy) || 1;
+        const ox = (-vy / vlen) * 20;
+        const oy = (vx / vlen) * 20;
+        drawCanvasVecLabel(ctx, 'AB', mx + ox, my + oy, '#0369a1', 17);
+      }
+
+      // 11. Đầu Con Rắn tại vị trí hiện tại
+      if (state.pos) {
+        const sPx = gridToPx(state.pos.x, state.pos.y);
+        drawSnakeHead(ctx, sPx.x, sPx.y, Math.max(11, cell * 0.34), state.facing);
+      }
+
+      // 12. Nhãn điểm A và B (tùy công tắc hiện tọa độ)
+      if (state.pointA) {
+        const aPx = gridToPx(state.pointA.x, state.pointA.y);
+        const aText = state.opts.showPointCoords ? fmtPointPlain(state.pointA, 'A') : 'A';
+        const yOff = state.pointA.y >= 4 ? 26 : -25;
+        drawPillLabel(ctx, aText, aPx.x, aPx.y + yOff, '#f0fdf4', '#166534', '#86efac');
+      }
+      if (state.pointB) {
+        const bPx = gridToPx(state.pointB.x, state.pointB.y);
+        const bText = state.opts.showPointCoords ? fmtPointPlain(state.pointB, 'B') : 'B';
+        const yOff = state.pointB.y <= -4 ? -26 : 26;
+        drawPillLabel(ctx, bText, bPx.x, bPx.y + yOff, '#fff1f2', '#9f1239', '#fda4af');
+      }
+
+      // 13. Hạt ăn mừng nhẹ khi rắn ăn táo
+      if (state.particles.length > 0) {
+        for (const p of state.particles) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
+    function spawnEatParticles(gx, gy) {
+      const center = gridToPx(gx, gy);
+      const colors = ['#10b981', '#0ea5e9', '#f59e0b', '#f43f5e', '#14b8a6'];
+      for (let i = 0; i < 28; i++) {
+        const ang = (Math.PI * 2 * i) / 28 + Math.random() * 0.2;
+        const speed = 1.8 + Math.random() * 3.8;
+        state.particles.push({
+          x: center.x,
+          y: center.y,
+          vx: Math.cos(ang) * speed,
+          vy: Math.sin(ang) * speed,
+          r: 2.5 + Math.random() * 3,
+          color: colors[i % colors.length],
+          life: 1,
+        });
+      }
+      if (!particleAnimId) animateParticles();
+    }
+
+    function animateParticles() {
+      state.particles = state.particles.filter(p => p.life > 0.02);
+      for (const p of state.particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.94;
+        p.vy *= 0.94;
+        p.life -= 0.032;
+      }
+      drawCanvas();
+      if (state.particles.length > 0) {
+        particleAnimId = requestAnimationFrame(animateParticles);
+      } else {
+        particleAnimId = null;
+      }
+    }
+
+    /* =====================================================
+       5. CẬP NHẬT GIAO DIỆN BIỂU THỨC, NÚT & BẢNG SO SÁNH
+       ===================================================== */
+    function updateUI() {
+      const badge = document.getElementById('phase-badge');
+      const stepPill = document.getElementById('step-counter-pill');
+      const exprBox = document.getElementById('expression-box');
+      const btnStart = document.getElementById('btn-start');
+      const btnUndo = document.getElementById('btn-undo');
+      const btnRetry = document.getElementById('btn-retry-path');
+      const btnSimplify = document.getElementById('btn-simplify');
+      const dpadPos = document.getElementById('dpad-pos');
+      const pythBar = document.getElementById('pythagoras-bar');
+      const pythFormula = document.getElementById('pythagoras-formula');
+
+      // Trạng thái vị trí hiện tại ở tâm D-pad
+      dpadPos.textContent = state.pos ? `(${fmtSignNum(state.pos.x)};${fmtSignNum(state.pos.y)})` : '—';
+
+      // Đếm bước
+      if (state.steps.length > 0) {
+        stepPill.textContent = `${state.steps.length} bước`;
+        stepPill.classList.remove('hidden');
+      } else {
+        stepPill.classList.add('hidden');
+      }
+
+      // Reset hiệu ứng pulse
+      btnStart.classList.remove('pulse-sky');
+      btnRetry.classList.remove('pulse-emerald');
+      btnSimplify.classList.add('hidden');
+
+      // Cập nhật nhãn pha & khung biểu thức
+      if (state.phase === 'pickA') {
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-emerald-100 text-emerald-800';
+        badge.textContent = 'Bước 1/3: Chọn vị trí Con Rắn (A)';
+        exprBox.innerHTML = `
+          <span class="text-slate-600 text-base sm:text-lg font-semibold">
+            👆 <strong>Bước 1:</strong> Nhấn vào một giao điểm trên lưới tọa độ để đặt vị trí <strong>Con Rắn <span class="math-var text-emerald-700">A</span></strong> (hoặc chọn nhanh bài mẫu bên dưới).
+          </span>`;
+      } else if (state.phase === 'pickB') {
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-rose-100 text-rose-800';
+        badge.textContent = 'Bước 2/3: Chọn vị trí Quả Táo (B)';
+        exprBox.innerHTML = `
+          <span class="text-slate-600 text-base sm:text-lg font-semibold">
+            🍎 <strong>Bước 2:</strong> Đã đặt ${state.opts.showPointCoords ? fmtPoint(state.pointA, 'A') : '<span class="math-var">A</span>'}. Hãy nhấn chọn một giao điểm khác để đặt <strong>Quả Táo <span class="math-var text-rose-700">B</span></strong>!
+          </span>`;
+      } else if (state.phase === 'ready') {
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-sky-100 text-sky-800';
+        badge.textContent = 'Bước 3/3: Nhấn "Bắt đầu" để di chuyển';
+        btnStart.classList.add('pulse-sky');
+        exprBox.innerHTML = `
+          <span class="text-slate-700 text-base sm:text-lg font-semibold">
+            ▶ <strong>Bước 3:</strong> Đã chọn ${state.opts.showPointCoords ? fmtPoint(state.pointA, 'A') : '<span class="math-var">A</span>'} và ${state.opts.showPointCoords ? fmtPoint(state.pointB, 'B') : '<span class="math-var">B</span>'}. Nhấn nút <strong>"Bắt đầu"</strong> rồi dùng phím mũi tên để điều khiển rắn ăn táo!
+          </span>`;
+      } else if (state.phase === 'playing') {
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-teal-100 text-teal-800';
+        badge.textContent = '🐍 Đang di chuyển tới quả táo B...';
+        exprBox.innerHTML = buildStepsExpressionHTML(false);
+        exprBox.scrollTop = exprBox.scrollHeight;
+      } else if (state.phase === 'reached') {
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-emerald-600 text-white';
+        badge.textContent = '🍎 Rắn đã ăn được táo! Hãy nhấn "Rút gọn"';
+        btnSimplify.classList.remove('hidden');
+        exprBox.innerHTML = buildStepsExpressionHTML(false);
+        exprBox.scrollTop = exprBox.scrollHeight;
+      } else if (state.phase === 'simplified') {
+        badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-sky-700 text-white';
+        badge.textContent = '✅ Đã rút gọn phương trình Vectơ!';
+        btnRetry.classList.add('pulse-emerald');
+        exprBox.innerHTML = buildStepsExpressionHTML(true);
+        exprBox.scrollTop = exprBox.scrollHeight;
+      }
+
+      // Bật / tắt các nút điều khiển
+      btnStart.disabled = state.phase !== 'ready';
+      btnUndo.disabled = !(state.steps.length > 0 && (state.phase === 'playing' || state.phase === 'reached'));
+      btnRetry.disabled = !(state.pointA && state.pointB && (state.phase === 'playing' || state.phase === 'reached' || state.phase === 'simplified'));
+
+      // Bật / tắt cụm D-pad
+      const canMove = state.phase === 'playing' || state.phase === 'ready';
+      document.querySelectorAll('.dpad-btn').forEach(btn => {
+        btn.disabled = !canMove;
+        btn.classList.toggle('opacity-45', !canMove);
+        btn.classList.toggle('cursor-not-allowed', !canMove);
+      });
+
+      // Cập nhật thanh Pytago (khi bật công tắc & đã ăn táo)
+      const hasEaten = state.phase === 'reached' || state.phase === 'simplified';
+      if (state.opts.showPythagoras && hasEaten && state.pointA && state.pointB) {
+        const dx = state.pointB.x - state.pointA.x;
+        const dy = state.pointB.y - state.pointA.y;
+        const sumSq = dx * dx + dy * dy;
+        const rad = simplifyRadical(sumSq);
+        const dxParen = dx < 0 ? `(−${Math.abs(dx)})` : `${dx}`;
+        const dyParen = dy < 0 ? `(−${Math.abs(dy)})` : `${dy}`;
+        const exactAndApprox = rad.isInt
+          ? `<span class="text-rose-700 text-lg sm:text-xl font-extrabold">${rad.exact}</span>`
+          : `<span class="text-rose-700 text-lg sm:text-xl font-extrabold">${rad.exact}</span> <span class="text-slate-600 font-mono text-sm">(≈ ${rad.approx})</span>`;
+
+        pythFormula.innerHTML = `
+          <span><span class="math-var">AB</span> = |<span class="vec text-sky-700">AB</span>| =</span>
+          <span class="font-mono bg-white px-2.5 py-0.5 rounded-lg border border-rose-200 text-sm sm:text-base">
+            √(${dxParen}² + ${dyParen}²) = √${sumSq}
+          </span>
+          <span>= ${exactAndApprox}</span>`;
+        pythBar.classList.remove('hidden');
+      } else {
+        pythBar.classList.add('hidden');
+      }
+
+      renderHistoryTable();
+    }
+
+    /**
+     * Xây dựng chuỗi biểu thức từng bước (+1i, -1i, +1j, -1j) & phần rút gọn
+     */
+    function buildStepsExpressionHTML(showSimplified) {
+      if (state.steps.length === 0) {
+        return `<span class="text-slate-800"><span class="vec">v</span> = <span class="text-slate-400 font-normal text-base">Hãy bấm phím mũi tên để bắt đầu di chuyển con rắn...</span></span>`;
+      }
+
+      const terms = state.steps.map((st, idx) => {
+        if (st.dx !== 0) {
+          const sign = st.dx > 0 ? (idx === 0 ? '+1' : ' + 1') : (idx === 0 ? '−1' : ' − 1');
+          return `<span class="text-blue-700 whitespace-nowrap">${sign}<span class="vec">i</span></span>`;
+        } else {
+          const sign = st.dy > 0 ? (idx === 0 ? '+1' : ' + 1') : (idx === 0 ? '−1' : ' − 1');
+          return `<span class="text-orange-600 whitespace-nowrap">${sign}<span class="vec">j</span></span>`;
+        }
+      }).join('');
+
+      if (!showSimplified) {
+        return `<span class="mr-1.5 text-slate-900 whitespace-nowrap"><span class="vec">v</span> =</span>${terms}`;
+      }
+
+      const dx = state.pointB.x - state.pointA.x;
+      const dy = state.pointB.y - state.pointA.y;
+      const simpHTML = formatSimplifiedVectorHTML(dx, dy);
+      const coordBadge = state.opts.showVecCoord
+        ? `<span class="ml-2 inline-flex items-center px-3 py-0.5 rounded-lg bg-indigo-600 text-white font-mono text-base sm:text-lg shadow-sm">
+             ⇒ <span class="vec text-white mx-1">AB</span> = (${fmtSignNum(dx)}; ${fmtSignNum(dy)})
+           </span>`
+        : '';
+
+      return `
+        <div class="w-full space-y-1.5">
+          <div class="text-sm sm:text-base text-slate-500 font-semibold leading-snug">
+            <span class="text-slate-700 mr-1"><span class="vec">v</span> =</span>${terms}
+          </div>
+          <div class="pt-1.5 border-t border-slate-200 flex items-center flex-wrap gap-1.5 text-xl sm:text-2xl font-extrabold text-slate-900">
+            <span class="text-sky-700"><span class="vec">AB</span> =</span>
+            <span class="px-3 py-0.5 rounded-xl bg-emerald-50 border-2 border-emerald-400">${simpHTML}</span>
+            ${coordBadge}
+          </div>
+        </div>`;
+    }
+
+    function renderHistoryTable() {
+      const label = document.getElementById('history-pair-label');
+      const tbody = document.getElementById('history-tbody');
+      const callout = document.getElementById('uniqueness-callout');
+
+      if (state.pointA && state.pointB) {
+        label.innerHTML = state.opts.showPointCoords
+          ? `Cặp điểm: ${fmtPoint(state.pointA, 'A')} → ${fmtPoint(state.pointB, 'B')}`
+          : `Cặp điểm: <span class="math-var">A</span> → <span class="math-var">B</span>`;
+      } else {
+        label.textContent = 'Cặp điểm hiện tại: chưa chọn A, B';
+      }
+
+      if (state.history.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="3" class="py-5 px-3 text-center text-slate-400 italic text-xs">
+              Hoàn thành 1 đường đi và nhấn <strong>"Rút gọn"</strong> để lưu lại, sau đó nhấn <strong>"Thử đường đi khác"</strong> để so sánh!
+            </td>
+          </tr>`;
+        callout.classList.add('hidden');
+        return;
+      }
+
+      tbody.innerHTML = state.history.map((item, i) => {
+        const simpHTML = formatSimplifiedVectorHTML(item.dx, item.dy);
+        const coordText = state.opts.showVecCoord
+          ? `<span class="ml-1.5 font-mono text-xs text-indigo-700 font-extrabold">(${fmtSignNum(item.dx)}; ${fmtSignNum(item.dy)})</span>`
+          : '';
+        return `
+          <tr class="hover:bg-teal-50/50">
+            <td class="py-2 px-2.5 font-extrabold text-slate-500">Lần ${i + 1}</td>
+            <td class="py-2 px-2.5 font-mono font-bold text-slate-700">${item.stepCount} bước</td>
+            <td class="py-2 px-2.5 font-extrabold text-base">${simpHTML}${coordText}</td>
+          </tr>`;
+      }).join('');
+
+      // Hiện hộp kết luận tính duy nhất khi HS đã thử từ 2 lần trở lên
+      callout.classList.toggle('hidden', state.history.length < 2);
+    }
+
+    /* =====================================================
+       6. CÁC HÀNH ĐỘNG TƯƠNG TÁC CỦA NGƯỜI DÙNG
+       ===================================================== */
+    function onToggleChange() {
+      state.opts.showUnitVecs = document.getElementById('opt-unit-vecs').checked;
+      state.opts.showPointCoords = document.getElementById('opt-point-coords').checked;
+      state.opts.showVecCoord = document.getElementById('opt-vec-coord').checked;
+      state.opts.showPythagoras = document.getElementById('opt-pythagoras').checked;
+      updateUI();
+      drawCanvas();
+    }
+
+    function startPlaying() {
+      if (state.phase !== 'ready' || !state.pointA || !state.pointB) return;
+      state.phase = 'playing';
+      hideToast();
+      sfx.pick();
+      updateUI();
+      drawCanvas();
+    }
+
+    function moveSnake(dx, dy) {
+      // Nếu đang ở pha 'ready', cho phép bấm mũi tên để bắt đầu ngay rất thuận tiện
+      if (state.phase === 'ready' && state.pointA && state.pointB) {
+        state.phase = 'playing';
+      }
+      if (state.phase !== 'playing' || !state.pos) return;
+
+      const nx = state.pos.x + dx;
+      const ny = state.pos.y + dy;
+
+      // Chặn vượt biên lưới tọa độ
+      if (nx < GRID.xMin || nx > GRID.xMax || ny < GRID.yMin || ny > GRID.yMax) {
+        sfx.bump();
+        showToast('🚧 Con rắn đã chạm mép lưới tọa độ! Hãy rẽ hướng khác nhé.', 'warn');
+        return;
+      }
+
+      const from = { x: state.pos.x, y: state.pos.y };
+      const to = { x: nx, y: ny };
+      state.steps.push({ dx, dy, from, to });
+      state.pos = to;
+      state.facing = { dx, dy };
+      hideToast();
+
+      // Kiểm tra rắn đã chạm quả táo B chưa
+      if (to.x === state.pointB.x && to.y === state.pointB.y) {
+        state.phase = 'reached';
+        sfx.eat();
+        spawnEatParticles(to.x, to.y);
+        showToast(`🎉 Rắn đã ăn được táo sau <strong>${state.steps.length} bước</strong>! Nhấn nút <strong>"Rút gọn"</strong> màu xanh lá phía trên.`, 'success');
+      } else {
+        if (dx !== 0) sfx.stepH();
+        else sfx.stepV();
+      }
+
+      updateUI();
+      drawCanvas();
+    }
+
+    function undoStep() {
+      if (state.steps.length === 0) return;
+      if (state.phase !== 'playing' && state.phase !== 'reached') return;
+
+      const last = state.steps.pop();
+      state.pos = { x: last.from.x, y: last.from.y };
+      if (state.steps.length > 0) {
+        const prev = state.steps[state.steps.length - 1];
+        state.facing = { dx: prev.dx, dy: prev.dy };
+      } else {
+        orientSnakeTowardApple();
+      }
+      state.phase = 'playing';
+      hideToast();
+      sfx.undo();
+      updateUI();
+      drawCanvas();
+    }
+
+    function simplifyExpression() {
+      if (state.phase !== 'reached' || !state.pointA || !state.pointB) return;
+      state.phase = 'simplified';
+      const dx = state.pointB.x - state.pointA.x;
+      const dy = state.pointB.y - state.pointA.y;
+
+      state.history.push({
+        stepCount: state.steps.length,
+        dx,
+        dy,
+      });
+
+      sfx.simplify();
+      showToast('✨ Đã lưu vào bảng so sánh! Hãy bấm <strong>"Thử đường đi khác"</strong> để kiểm chứng tính duy nhất nhé.', 'success');
+      updateUI();
+      drawCanvas();
+    }
+
+    function tryAnotherPath() {
+      if (!state.pointA || !state.pointB) return;
+      state.pos = { x: state.pointA.x, y: state.pointA.y };
+      state.steps = [];
+      orientSnakeTowardApple();
+      state.phase = 'playing';
+      sfx.pick();
+      showToast('🔄 Đã đưa rắn về lại điểm <strong>A</strong> (giữ nguyên A, B). Hãy đi một con đường vòng khác!', 'info');
+      updateUI();
+      drawCanvas();
+    }
+
+    function resetAll() {
+      state.phase = 'pickA';
+      state.pointA = null;
+      state.pointB = null;
+      state.pos = null;
+      state.steps = [];
+      state.history = [];
+      state.facing = { dx: 1, dy: 0 };
+      hideToast();
+      sfx.undo();
+      updateUI();
+      drawCanvas();
+    }
+
+    function clearHistory() {
+      state.history = [];
+      renderHistoryTable();
+    }
+
+    function orientSnakeTowardApple() {
+      if (!state.pointA || !state.pointB) {
+        state.facing = { dx: 1, dy: 0 };
+        return;
+      }
+      const dx = state.pointB.x - state.pointA.x;
+      const dy = state.pointB.y - state.pointA.y;
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        state.facing = { dx: dx >= 0 ? 1 : -1, dy: 0 };
+      } else {
+        state.facing = { dx: 0, dy: dy >= 0 ? 1 : -1 };
+      }
+    }
+
+    function loadPreset(ax, ay, bx, by, title) {
+      state.pointA = { x: ax, y: ay };
+      state.pointB = { x: bx, y: by };
+      state.pos = { x: ax, y: ay };
+      state.steps = [];
+      state.history = [];
+      orientSnakeTowardApple();
+      state.phase = 'playing';
+      sfx.pick();
+      showToast(`📌 Đã mở <strong>${title}</strong>. Dùng phím mũi tên (hoặc cụm phím cảm ứng) để điều khiển rắn ăn táo!`, 'info');
+      updateUI();
+      drawCanvas();
+    }
+
+    function randomAB() {
+      let ax, ay, bx, by;
+      let tries = 0;
+      do {
+        ax = Math.floor(Math.random() * 13) - 6; // -6..6
+        ay = Math.floor(Math.random() * 7) - 3;  // -3..3
+        bx = Math.floor(Math.random() * 13) - 6;
+        by = Math.floor(Math.random() * 7) - 3;
+        tries++;
+      } while ((ax === bx && ay === by) || (Math.abs(bx - ax) + Math.abs(by - ay) < 3 && tries < 30));
+
+      loadPreset(ax, ay, bx, by, 'Ngẫu nhiên A, B');
+    }
+
+    /* =====================================================
+       7. SỰ KIỆN CHUỘT, CẢM ỨNG & BÀN PHÍM
+       ===================================================== */
+    function getCanvasPointer(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function handleGridPick(evt) {
+      if (state.phase !== 'pickA' && state.phase !== 'pickB') return;
+      const pt = getCanvasPointer(evt);
+      const cell = pxToGrid(pt.x, pt.y);
+      if (!cell) return;
+
+      if (state.phase === 'pickA') {
+        state.pointA = cell;
+        state.pos = { x: cell.x, y: cell.y };
+        state.phase = 'pickB';
+        state.history = [];
+        sfx.pick();
+        hideToast();
+        updateUI();
+        drawCanvas();
+      } else if (state.phase === 'pickB') {
+        if (cell.x === state.pointA.x && cell.y === state.pointA.y) {
+          sfx.bump();
+          showToast('⚠ Quả táo B cần đặt ở một điểm <strong>khác</strong> vị trí Con Rắn A nhé!', 'warn');
+          return;
+        }
+        state.pointB = cell;
+        orientSnakeTowardApple();
+        state.phase = 'ready';
+        sfx.pick();
+        hideToast();
+        updateUI();
+        drawCanvas();
+      }
+    }
+
+    canvas.addEventListener('mousemove', (evt) => {
+      if (state.phase !== 'pickA' && state.phase !== 'pickB') {
+        if (state.hoverCell) {
+          state.hoverCell = null;
+          canvas.style.cursor = 'default';
+          drawCanvas();
+        }
+        return;
+      }
+      const pt = getCanvasPointer(evt);
+      const cell = pxToGrid(pt.x, pt.y);
+      const changed =
+        (cell === null) !== (state.hoverCell === null) ||
+        (cell && state.hoverCell && (cell.x !== state.hoverCell.x || cell.y !== state.hoverCell.y));
+      state.hoverCell = cell;
+      canvas.style.cursor = cell ? 'pointer' : 'default';
+      if (changed) drawCanvas();
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (state.hoverCell) {
+        state.hoverCell = null;
+        drawCanvas();
+      }
+    });
+
+    canvas.addEventListener('click', handleGridPick);
+    canvas.addEventListener('touchstart', (evt) => {
+      if (state.phase === 'pickA' || state.phase === 'pickB') {
+        evt.preventDefault();
+        handleGridPick(evt);
+      }
+    }, { passive: false });
+
+    // Hỗ trợ bàn phím: Phím mũi tên, WASD, Z/Backspace (Undo), Enter (Bắt đầu / Rút gọn)
+    window.addEventListener('keydown', (evt) => {
+      const key = evt.key;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+        evt.preventDefault(); // Chặn cuộn trang khi bấm phím mũi tên
+      }
+
+      if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+        moveSnake(1, 0);
+      } else if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+        moveSnake(-1, 0);
+      } else if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+        moveSnake(0, 1);
+      } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
+        moveSnake(0, -1);
+      } else if (key === 'Backspace' || (key === 'z' && (evt.ctrlKey || evt.metaKey))) {
+        if (state.phase === 'playing' || state.phase === 'reached') {
+          evt.preventDefault();
+          undoStep();
+        }
+      } else if (key === 'Enter') {
+        if (state.phase === 'ready') startPlaying();
+        else if (state.phase === 'reached') simplifyExpression();
+      }
+    });
+
+    /* =====================================================
+       8. KHỞI TẠO KHI TẢI TRANG & KHI THAY ĐỔI KÍCH THƯỚC
+       ===================================================== */
+    window.addEventListener('resize', () => {
+      drawCanvas();
+    });
+
+    window.addEventListener('load', () => {
+      updateUI();
+      drawCanvas();
+    });
+  </script>
+</body>
+</html>
